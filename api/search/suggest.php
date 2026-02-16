@@ -10,25 +10,31 @@ function getProductDisplayPrice($conn, $product) {
         ? floatval($product['sale_price'])
         : floatval($product['regular_price']);
 
-    if ($product['product_type'] !== 'variable') {
+    if (($product['product_type'] ?? '') !== 'variable') {
         return $basePrice;
     }
 
     $productId = intval($product['id']);
     $vq = mysqli_query(
         $conn,
-        "SELECT sale_price, regular_price
-        FROM product_variations
-        WHERE product_id='$productId'"
+        "SELECT MIN(v.effective_price) AS min_variation_price
+         FROM (
+            SELECT CASE
+                WHEN sale_price IS NOT NULL AND sale_price > 0 THEN sale_price
+                WHEN regular_price IS NOT NULL AND regular_price > 0 THEN regular_price
+                ELSE NULL
+            END AS effective_price
+            FROM product_variations
+            WHERE product_id='$productId'
+         ) v
+         WHERE v.effective_price IS NOT NULL"
     );
 
-    $variationPrice = null;
     if ($vq && ($vr = mysqli_fetch_assoc($vq))) {
-        $variationPrice = isset($vr['sale_price']) ? floatval($vr['sale_price']) : floatval($vr['regular_price']);
-    }
-
-    if ($variationPrice !== null && $variationPrice > 0) {
-        return $variationPrice;
+        $variationPrice = floatval($vr['min_variation_price'] ?? 0);
+        if ($variationPrice > 0) {
+            return $variationPrice;
+        }
     }
 
     return $basePrice;
@@ -43,6 +49,7 @@ function buildProductSuggestionItem($conn, $row) {
         'id' => intval($row['id']),
         'label' => $row['title'],
         'image' => $img,
+        'display_price' => $displayPrice,
         'sale_price' => $displayPrice,
         'regular_price' => $displayPrice,
         'product_type' => $row['product_type']
