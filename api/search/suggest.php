@@ -5,6 +5,55 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/functions.php';
 
+function getProductDisplayPrice($conn, $product) {
+    $basePrice = ($product['sale_price'] !== null && floatval($product['sale_price']) > 0)
+        ? floatval($product['sale_price'])
+        : floatval($product['regular_price']);
+
+    if (($product['product_type'] ?? '') !== 'variable') {
+        return $basePrice;
+    }
+
+    $productId = intval($product['id']);
+    $vq = mysqli_query(
+        $conn,
+        "SELECT MIN(
+            CASE
+                WHEN sale_price IS NOT NULL AND sale_price > 0 THEN sale_price
+                ELSE regular_price
+            END
+        ) AS min_variation_price
+        FROM product_variations
+        WHERE product_id='$productId'"
+    );
+
+    $variationPrice = null;
+    if ($vq && ($vr = mysqli_fetch_assoc($vq))) {
+        $variationPrice = isset($vr['min_variation_price']) ? floatval($vr['min_variation_price']) : null;
+    }
+
+    if ($variationPrice !== null && $variationPrice > 0) {
+        return $variationPrice;
+    }
+
+    return $basePrice;
+}
+
+function buildProductSuggestionItem($conn, $row) {
+    $img = explode(',', $row['images'])[0] ?? '';
+    $displayPrice = getProductDisplayPrice($conn, $row);
+
+    return [
+        'type' => 'product',
+        'id' => intval($row['id']),
+        'label' => $row['title'],
+        'image' => $img,
+        'sale_price' => $displayPrice,
+        'regular_price' => $displayPrice,
+        'product_type' => $row['product_type']
+    ];
+}
+
 $q = trim($_GET['q'] ?? '');
 $q_safe = mysqli_real_escape_string($conn, $q);
 
@@ -19,51 +68,27 @@ $items = [];
 
 // 1) Product title prefix (best suggestions)
 $prod_q = mysqli_query($conn,
-    "SELECT id, title, images, price_inr, regular_price, sale_price, product_type
+    "SELECT id, title, images, regular_price, sale_price, product_type
      FROM products
      WHERE title LIKE '". $q_safe ."%' 
      LIMIT $max"
 );
 while ($r = mysqli_fetch_assoc($prod_q)) {
-    $img = explode(',', $r['images'])[0] ?? '';
-    $displayPrice = ($r['sale_price'] !== null && floatval($r['sale_price']) > 0)
-        ? floatval($r['sale_price'])
-        : floatval($r['regular_price']);
-    $items[] = [
-        'type' => 'product',
-        'id' => intval($r['id']),
-        'label' => $r['title'],
-        'image' => $img,
-        'price_inr' => floatval($r['price_inr']),
-        'sale_price' => floatval($r['sale_price']),
-        'product_type' => $r['product_type']
-    ];
+    $items[] = buildProductSuggestionItem($conn, $r);
 }
 
 // 2) Product title / description partial matches (if still space)
 if (count($items) < $max) {
     $remaining = $max - count($items);
     $prod_q2 = mysqli_query($conn,
-        "SELECT id, title, images, price_inr, product_type
+        "SELECT id, title, images, regular_price, sale_price, product_type
          FROM products
          WHERE (title LIKE '%$q_safe%' OR description LIKE '%$q_safe%')
          AND title NOT LIKE '". $q_safe ."%' 
          LIMIT $remaining"
     );
     while ($r = mysqli_fetch_assoc($prod_q2)) {
-        $img = explode(',', $r['images'])[0] ?? '';
-    $displayPrice = ($r['sale_price'] !== null && floatval($r['sale_price']) > 0)
-        ? floatval($r['sale_price'])
-        : floatval($r['regular_price']);
-    $items[] = [
-        'type' => 'product',
-        'id' => intval($r['id']),
-        'label' => $r['title'],
-        'image' => $img,
-        'price_inr' => floatval($r['price_inr']),
-        'sale_price' => floatval($r['sale_price']),
-            'product_type' => $r['product_type']
-        ];
+        $items[] = buildProductSuggestionItem($conn, $r);
     }
 }
 
