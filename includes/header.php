@@ -84,6 +84,7 @@ $menuCategories = getMenuCategories();
   box-shadow: 0 6px 18px rgba(0,0,0,0.08);
   max-height: 420px;
   overflow: auto;
+  display: none;
 }
 .search-suggestion { padding: 8px 10px; cursor: pointer; display:flex; gap:10px; align-items:center; }
 .search-suggestion:hover, .search-suggestion.active { background:#f6f6f6; }
@@ -131,7 +132,7 @@ function updateCartCount(count) {
     box.style.display = 'block';
     box.innerHTML = items.map((it, idx) => {
       if (it.type === 'product') {
-        const price = it.price_inr ? '₹' + Number(it.price_inr).toFixed(2) : '';
+        const price = it.sale_price ? '₹' + Number(it.sale_price).toFixed(2) : '';
         const img = it.image ? '/assets/uploads/' + it.image : '/assets/images/default.png';
         return `<div class="search-suggestion" data-idx="${idx}" data-type="product" data-id="${it.id}">
                   <img src="${img}" alt="">
