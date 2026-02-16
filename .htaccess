@@ -1,0 +1,7 @@
+RewriteEngine On
+
+# Clean product URLs
+RewriteRule ^product/([a-z0-9\-]+)/?$ product.php?slug=$1 [L,QSA]
+
+# Clean category URLs
+RewriteRule ^category/([a-z0-9\-]+)/?$ category.php?slug=$1 [L,QSA]
