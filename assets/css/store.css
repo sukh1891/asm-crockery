@@ -1,0 +1,368 @@
+/* ---------- RESET ---------- */
+* {
+    box-sizing: border-box;
+}
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #f8f9fa;
+    color: #212529;
+    margin: 0;
+}
+/* ===== HEADER ===== */
+.site-header {
+    background: #fff;
+    border-bottom: 1px solid #e5e5e5;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 12px 0;
+}
+
+.logo a {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #111;
+}
+
+.main-nav {
+    display: flex;
+    gap: 1.2rem;
+}
+
+.main-nav a {
+    font-weight: 500;
+    color: #333;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.search-form input {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.header-link {
+    font-weight: 500;
+    color: #333;
+}
+/* ===== HERO ===== */
+.hero {
+    padding: 3rem 0;
+}
+
+.hero h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+}
+
+.hero p {
+    font-size: 1.1rem;
+    color: #555;
+    margin-top: 0.5rem;
+}
+
+/* ===== HOME CATEGORIES ===== */
+.home-categories h2 {
+    margin: 2rem 0 1rem;
+}
+
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+}
+
+.category-card {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    padding: 1.5rem;
+    text-align: center;
+    font-weight: 600;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.category-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+/* ===== FOOTER ===== */
+.site-footer {
+    background: #f8f9fa;
+    margin-top: 4rem;
+    border-top: 1px solid #e5e5e5;
+}
+
+.footer-inner {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    padding: 2.5rem 0;
+}
+
+.footer-links a {
+    display: block;
+    color: #555;
+    margin: 0.25rem 0;
+}
+
+.footer-bottom {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #777;
+    padding: 1rem 0;
+    border-top: 1px solid #ddd;
+}
+
+/* ---------- LINKS ---------- */
+a {
+    text-decoration: none !important;
+    color: inherit !important;
+}
+a:hover {
+    color: #0d6efd;
+}
+
+/* ---------- HEADER ---------- */
+.navbar {
+    background: #fff;
+    border-bottom: 1px solid #e5e5e5;
+}
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+/* ---------- CONTAINER ---------- */
+.container {
+    max-width: 1200px;
+}
+
+/* ---------- BREADCRUMB ---------- */
+.breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "›";
+}
+
+/* ---------- CATEGORY HEADER ---------- */
+.category-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+/* ---------- PRODUCT GRID ---------- */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.25rem;
+}
+
+/* ---------- PRODUCT CARD ---------- */
+.product-card {
+    position: relative;
+    background: #fff;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+.product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+.product-card img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    background: #f1f1f1;
+}
+
+.product-card-body {
+    padding: 0.75rem;
+}
+
+.product-title {
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin: 0 0 0.25rem;
+}
+
+.product-price {
+    font-weight: 600;
+    color: #198754;
+}
+
+/* ---------- PRODUCT PAGE ---------- */
+.product-title-lg {
+    font-size: 1.75rem;
+    font-weight: 600;
+}
+.product-price-lg {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #198754;
+}
+
+/* ---------- BUTTONS ---------- */
+.btn-primary {
+    background: #0d6efd;
+    border-color: #0d6efd;
+}
+.btn-primary:hover {
+    background: #0b5ed7;
+}
+
+/* ---------- FOOTER ---------- */
+.footer {
+    background: #fff;
+    border-top: 1px solid #e5e5e5;
+    margin-top: 3rem;
+    padding: 2rem 0;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 768px) {
+    .product-title-lg {
+        font-size: 1.4rem;
+    }
+}
+/* ---------- PRODUCT GALLERY ---------- */
+.product-gallery {
+    display: flex;
+    gap: 1rem;
+}
+
+.gallery-thumbs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.gallery-thumbs img {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    background: #f1f1f1;
+}
+
+.gallery-thumbs img.active {
+    border-color: #0d6efd;
+}
+
+.gallery-main img {
+    width: 100%;
+    max-height: 500px;
+    object-fit: contain;
+    background: #f8f8f8;
+    border-radius: 6px;
+}
+
+/* ---------- MOBILE ---------- */
+@media (max-width: 768px) {
+    .product-gallery {
+        flex-direction: column;
+    }
+
+    .gallery-thumbs {
+        flex-direction: row;
+        overflow-x: auto;
+    }
+}
+/* ---------- SALE BADGE ---------- */
+.sale-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: #dc3545;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 6px;
+    border-radius: 4px;
+    z-index: 2;
+}
+
+/* ---------- PRICE STYLES ---------- */
+.price-wrap {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.price-regular {
+    text-decoration: line-through;
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+.price-sale {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.price-normal {
+    font-weight: 600;
+    color: #198754;
+}
+.position-relative {
+    position: relative;
+}
+.search-wrapper {
+    position: relative;
+}
+
+.search-dropdown {
+    position: absolute;
+    top: 110%;
+    left: 0;
+    width: 300px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    display: none;
+    z-index: 999;
+}
+
+.search-item {
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.search-item img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+}
+
+.search-all {
+    display: block;
+    padding: 8px;
+    text-align: center;
+    font-weight: 600;
+}
