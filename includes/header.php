@@ -132,7 +132,8 @@ function updateCartCount(count) {
     box.style.display = 'block';
     box.innerHTML = items.map((it, idx) => {
       if (it.type === 'product') {
-        const price = it.sale_price ? '₹' + Number(it.sale_price).toFixed(2) : '';
+        const rawPrice = it.display_price ?? it.sale_price ?? it.regular_price;
+        const price = (rawPrice !== null && rawPrice !== undefined && Number(rawPrice) > 0) ? '₹' + Number(rawPrice).toFixed(2) : '';
         const img = it.image ? '/assets/uploads/' + it.image : '/assets/images/default.png';
         return `<div class="search-suggestion" data-idx="${idx}" data-type="product" data-id="${it.id}">
                   <img src="${img}" alt="">
