@@ -10,26 +10,21 @@ function getProductDisplayPrice($conn, $product) {
         ? floatval($product['sale_price'])
         : floatval($product['regular_price']);
 
-    if (($product['product_type'] ?? '') !== 'variable') {
+    if ($product['product_type'] !== 'variable') {
         return $basePrice;
     }
 
     $productId = intval($product['id']);
     $vq = mysqli_query(
         $conn,
-        "SELECT MIN(
-            CASE
-                WHEN sale_price IS NOT NULL AND sale_price > 0 THEN sale_price
-                ELSE regular_price
-            END
-        ) AS min_variation_price
+        "SELECT sale_price, regular_price
         FROM product_variations
         WHERE product_id='$productId'"
     );
 
     $variationPrice = null;
     if ($vq && ($vr = mysqli_fetch_assoc($vq))) {
-        $variationPrice = isset($vr['min_variation_price']) ? floatval($vr['min_variation_price']) : null;
+        $variationPrice = isset($vr['sale_price']) ? floatval($vr['sale_price']) : floatval($vr['regular_price']);
     }
 
     if ($variationPrice !== null && $variationPrice > 0) {
