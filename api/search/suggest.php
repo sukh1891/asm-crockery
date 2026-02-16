@@ -19,19 +19,23 @@ $items = [];
 
 // 1) Product title prefix (best suggestions)
 $prod_q = mysqli_query($conn,
-    "SELECT id, title, images, price_inr, product_type
+    "SELECT id, title, images, price_inr, regular_price, sale_price, product_type
      FROM products
      WHERE title LIKE '". $q_safe ."%' 
      LIMIT $max"
 );
 while ($r = mysqli_fetch_assoc($prod_q)) {
     $img = explode(',', $r['images'])[0] ?? '';
+    $displayPrice = ($r['sale_price'] !== null && floatval($r['sale_price']) > 0)
+        ? floatval($r['sale_price'])
+        : floatval($r['regular_price']);
     $items[] = [
         'type' => 'product',
         'id' => intval($r['id']),
         'label' => $r['title'],
         'image' => $img,
         'price_inr' => floatval($r['price_inr']),
+        'sale_price' => floatval($r['sale_price']),
         'product_type' => $r['product_type']
     ];
 }
@@ -48,12 +52,16 @@ if (count($items) < $max) {
     );
     while ($r = mysqli_fetch_assoc($prod_q2)) {
         $img = explode(',', $r['images'])[0] ?? '';
-        $items[] = [
-            'type' => 'product',
-            'id' => intval($r['id']),
-            'label' => $r['title'],
-            'image' => $img,
-            'price_inr' => floatval($r['price_inr']),
+    $displayPrice = ($r['sale_price'] !== null && floatval($r['sale_price']) > 0)
+        ? floatval($r['sale_price'])
+        : floatval($r['regular_price']);
+    $items[] = [
+        'type' => 'product',
+        'id' => intval($r['id']),
+        'label' => $r['title'],
+        'image' => $img,
+        'price_inr' => floatval($r['price_inr']),
+        'sale_price' => floatval($r['sale_price']),
             'product_type' => $r['product_type']
         ];
     }
