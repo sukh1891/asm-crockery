@@ -8,9 +8,14 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 // inside search.php — improved query building
 $q_raw = trim($_GET['q'] ?? '');
 $category_id = intval($_GET['cat'] ?? 0);
-$min_price = $_GET['min_price'] !== '' ? floatval($_GET['min_price']) : null;
-$max_price = $_GET['max_price'] !== '' ? floatval($_GET['max_price']) : null;
+$min_price_raw = $_GET['min_price'] ?? '';
+$max_price_raw = $_GET['max_price'] ?? '';
+$min_price = $min_price_raw !== '' ? floatval($min_price_raw) : null;
+$max_price = $max_price_raw !== '' ? floatval($max_price_raw) : null;
 $sort = $_GET['sort'] ?? 'relevance';
+
+$country = getUserCountry();
+$use_usd = ($country !== 'IN');
 
 // tokenization: split on non-word characters, ignore short tokens
 $raw_tokens = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($q_raw), -1, PREG_SPLIT_NO_EMPTY);
@@ -178,7 +183,9 @@ $cat_res = mysqli_query($conn, "SELECT id, name FROM categories ORDER BY name AS
             while ($p = mysqli_fetch_assoc($result)) {
 
                 // Determine effective price
-                $price_inr = floatval($p['effective_price_inr']);
+                $base_price_inr = floatval($p['price_inr'] ?? 0);
+                $variation_price_inr = floatval($p['min_variation_price'] ?? 0);
+                $price_inr = $variation_price_inr > 0 ? $variation_price_inr : $base_price_inr;
                 if ($price_inr <= 0) $price_inr = 0;
 
                 $price_display = $use_usd
