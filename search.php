@@ -73,8 +73,42 @@ if ($category_id > 0) {
 }
 
 $effective_price_sql = "CASE
-    WHEN p.product_type = 'variable' THEN COALESCE((SELECT MIN(price_inr) FROM product_variations pv WHERE pv.product_id = p.id), p.price_inr)
-    ELSE COALESCE(p.price_inr, (SELECT MIN(price_inr) FROM product_variations pv WHERE pv.product_id = p.id))
+    WHEN p.product_type = 'variable' THEN COALESCE(
+        (
+            SELECT MIN(
+                CASE
+                    WHEN pv.sale_price IS NOT NULL AND pv.sale_price > 0 THEN pv.sale_price
+                    WHEN pv.regular_price IS NOT NULL AND pv.regular_price > 0 THEN pv.regular_price
+                    ELSE NULL
+                END
+            )
+            FROM product_variations pv
+            WHERE pv.product_id = p.id
+        ),
+        CASE
+            WHEN p.sale_price IS NOT NULL AND p.sale_price > 0 THEN p.sale_price
+            WHEN p.regular_price IS NOT NULL AND p.regular_price > 0 THEN p.regular_price
+            ELSE NULL
+        END
+    )
+    ELSE COALESCE(
+        CASE
+            WHEN p.sale_price IS NOT NULL AND p.sale_price > 0 THEN p.sale_price
+            WHEN p.regular_price IS NOT NULL AND p.regular_price > 0 THEN p.regular_price
+            ELSE NULL
+        END,
+        (
+            SELECT MIN(
+                CASE
+                    WHEN pv.sale_price IS NOT NULL AND pv.sale_price > 0 THEN pv.sale_price
+                    WHEN pv.regular_price IS NOT NULL AND pv.regular_price > 0 THEN pv.regular_price
+                    ELSE NULL
+                END
+            )
+            FROM product_variations pv
+            WHERE pv.product_id = p.id
+        )
+    )
 END";
 
 // price filter uses the cheapest purchasable price for each product
@@ -106,7 +140,17 @@ if (!empty($tokens)) {
 // final query: join with computed min variation price for display
 $sql = "
 SELECT p.*,
-       (SELECT MIN(price_inr) FROM product_variations pv WHERE pv.product_id = p.id) AS min_variation_price
+       (
+           SELECT MIN(
+               CASE
+                   WHEN pv.sale_price IS NOT NULL AND pv.sale_price > 0 THEN pv.sale_price
+                   WHEN pv.regular_price IS NOT NULL AND pv.regular_price > 0 THEN pv.regular_price
+                   ELSE NULL
+               END
+           )
+           FROM product_variations pv
+           WHERE pv.product_id = p.id
+       ) AS min_variation_price
 FROM products p
 $where
 $orderBy
@@ -188,14 +232,16 @@ $cat_res = mysqli_query($conn, "SELECT id, name FROM categories ORDER BY name AS
             while ($p = mysqli_fetch_assoc($result)) {
 
                 // Determine effective price
-                $base_price_inr = floatval($p['price_inr'] ?? 0);
-                $variation_price_inr = floatval($p['min_variation_price'] ?? 0);
-                $price_inr = $variation_price_inr > 0 ? $variation_price_inr : $base_price_inr;
-                if ($price_inr <= 0) $price_inr = 0;
+                $base_price = (isset($p['sale_price']) && floatval($p['sale_price']) > 0)
+                    ? floatval($p['sale_price'])
+                    : floatval($p['regular_price'] ?? 0);
+                $variation_price = floatval($p['min_variation_price'] ?? 0);
+                $effective_price = $variation_price > 0 ? $variation_price : $base_price;
+                if ($effective_price <= 0) $effective_price = 0;
 
                 $price_display = $use_usd
-                    ? "$" . convertToUSD($price_inr)
-                    : "₹" . number_format($price_inr, 2);
+                    ? "$" . convertToUSD($effective_price)
+                    : "₹" . number_format($effective_price, 2);
 
                 $images = explode(',', $p['images'] ?? '');
                 $img    = $images[0] ?? 'default.png';
