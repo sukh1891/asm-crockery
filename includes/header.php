@@ -5,6 +5,7 @@ $seo = $seo ?? seoHome();
 include 'config/db.php';
 //include 'includes/functions.php';
 if (session_status() == PHP_SESSION_NONE) session_start();
+if (function_exists('tryRememberUserLogin')) tryRememberUserLogin();
 $wishlist_count = function_exists('getWishlistCount') ? getWishlistCount() : 0;
 include_once 'includes/category-functions.php';
 $categoryTree = getMenuCategories();

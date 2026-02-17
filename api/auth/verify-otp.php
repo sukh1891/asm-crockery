@@ -51,6 +51,7 @@ mysqli_query($conn, "UPDATE users SET otp=NULL WHERE id='$userId'");
 
 // login
 $_SESSION['user_id'] = $userId;
+setUserRememberLogin($userId);
 
 // merge cart
 mergeGuestCartToUser($userId);

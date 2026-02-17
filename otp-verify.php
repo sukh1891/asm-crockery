@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'config/db.php';
+include 'includes/functions.php';
 // Save checkout form data on first entry
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_SESSION['checkout_data'])) {
     $_SESSION['checkout_data'] = [
@@ -58,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Existing user → login
                 $user = mysqli_fetch_assoc($userQ);
                 $_SESSION['user_id'] = $user['id'];
+                setUserRememberLogin($_SESSION['user_id']);
     
             } else {
                 // New user → create
@@ -67,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ");
     
                 $_SESSION['user_id'] = mysqli_insert_id($conn);
+                setUserRememberLogin($_SESSION['user_id']);
             }
     
             // Clean OTP data (important)
@@ -107,6 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (mysqli_num_rows($check) > 0) {
                 $u = mysqli_fetch_assoc($check);
                 $_SESSION['user_id'] = $u['id'];
+                setUserRememberLogin($_SESSION['user_id']);
             } else {
                 mysqli_query($conn,"
                     INSERT INTO users (name, phone, email, created_at)
@@ -118,6 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     )
                 ");
                 $_SESSION['user_id'] = mysqli_insert_id($conn);
+                setUserRememberLogin($_SESSION['user_id']);
             }
         }
     
