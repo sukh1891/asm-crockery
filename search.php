@@ -72,12 +72,17 @@ if ($category_id > 0) {
     $where .= " AND p.category_id = " . intval($category_id);
 }
 
-// price filter uses effective price (product.price or min variation price)
+$effective_price_sql = "CASE
+    WHEN p.product_type = 'variable' THEN COALESCE((SELECT MIN(price_inr) FROM product_variations pv WHERE pv.product_id = p.id), p.price_inr)
+    ELSE COALESCE(p.price_inr, (SELECT MIN(price_inr) FROM product_variations pv WHERE pv.product_id = p.id))
+END";
+
+// price filter uses the cheapest purchasable price for each product
 if ($min_price !== null) {
-    $where .= " AND COALESCE(p.price_inr, (SELECT MIN(price_inr) FROM product_variations pv WHERE pv.product_id = p.id)) >= " . floatval($min_price);
+    $where .= " AND ($effective_price_sql) >= " . floatval($min_price);
 }
 if ($max_price !== null) {
-    $where .= " AND COALESCE(p.price_inr, (SELECT MIN(price_inr) FROM product_variations pv WHERE pv.product_id = p.id)) <= " . floatval($max_price);
+    $where .= " AND ($effective_price_sql) <= " . floatval($max_price);
 }
 
 // ORDER / relevance: compute a simple score: title matches (per token) get higher weight
@@ -92,8 +97,8 @@ if (!empty($tokens)) {
     $score_expr = implode(' + ', $score_parts);
     $orderBy .= " ($score_expr) DESC, p.created_at DESC";
 } else {
-    if ($sort === 'price_asc') $orderBy .= "COALESCE(p.price_inr, (SELECT MIN(price_inr) FROM product_variations pv WHERE pv.product_id = p.id)) ASC";
-    elseif ($sort === 'price_desc') $orderBy .= "COALESCE(p.price_inr, (SELECT MIN(price_inr) FROM product_variations pv WHERE pv.product_id = p.id)) DESC";
+    if ($sort === 'price_asc') $orderBy .= "($effective_price_sql) ASC";
+    elseif ($sort === 'price_desc') $orderBy .= "($effective_price_sql) DESC";
     elseif ($sort === 'newest') $orderBy .= "p.created_at DESC";
     else $orderBy .= "p.created_at DESC";
 }
