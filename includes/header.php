@@ -3,12 +3,12 @@
 include_once __DIR__ . '/seo.php';
 $seo = $seo ?? seoHome();
 include 'config/db.php';
-//include 'includes/functions.php';
+include_once 'includes/functions.php';
 if (session_status() == PHP_SESSION_NONE) session_start();
 $wishlist_count = function_exists('getWishlistCount') ? getWishlistCount() : 0;
 include_once 'includes/category-functions.php';
 $categoryTree = getMenuCategories();
-$menuCategories = getMenuCategories();
+$menuCategories = array_slice(getMenuCategories(), 0, 10);
 ?>
 <!DOCTYPE html>
 <html>
@@ -63,9 +63,13 @@ $menuCategories = getMenuCategories();
                 </svg>
                 <span id="cartCount">
                 <?php
-                echo isset($_SESSION['cart'])
-                  ? array_sum(array_column($_SESSION['cart'],'qty'))
-                  : 0;
+                $cartCount = 0;
+                if (function_exists('getCartItems')) {
+                    foreach (getCartItems() as $ci) {
+                        $cartCount += max(1, intval($ci['qty'] ?? 1));
+                    }
+                }
+                echo $cartCount;
                 ?>
                 </span>
             </a>
