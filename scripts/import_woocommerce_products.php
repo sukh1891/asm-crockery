@@ -10,6 +10,8 @@
  *   [--per-page=50] \
  *   [--max-products=10] \
  *   [--delete-existing=0]
+ *
+ * Note: downloaded product images are converted and compressed to WebP (quality 80).
  */
 
 if (php_sapi_name() !== 'cli') {
@@ -73,6 +75,10 @@ if (!$storeUrl || !$consumerKey || !$consumerSecret) {
 $uploadDir = realpath(__DIR__ . '/../assets') . '/uploads';
 if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true)) {
     exit("Could not create upload directory: {$uploadDir}\n");
+}
+
+if (!function_exists('imagecreatefromstring') || !function_exists('imagewebp')) {
+    exit("GD extension with WebP support is required for image conversion.\n");
 }
 
 
@@ -151,36 +157,38 @@ function uniqueSlug(mysqli $conn, string $base): string
 
 function downloadImage(string $imageUrl, string $uploadDir): ?string
 {
-    $parsed = parse_url($imageUrl);
-    $path = $parsed['path'] ?? '';
-    $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-    $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-    if (!in_array($ext, $allowed, true)) {
-        $ext = 'jpg';
-    }
-
-    $filename = time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+    $filename = time() . '_' . bin2hex(random_bytes(4)) . '.webp';
     $filePath = $uploadDir . '/' . $filename;
 
     $ch = curl_init($imageUrl);
-    $fp = fopen($filePath, 'w');
-    if (!$fp) {
-        return null;
-    }
-
     curl_setopt_array($ch, [
-        CURLOPT_FILE => $fp,
+        CURLOPT_RETURNTRANSFER => true,
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_TIMEOUT => 120,
         CURLOPT_FAILONERROR => true,
     ]);
 
-    $ok = curl_exec($ch);
+    $binary = curl_exec($ch);
     $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
-    fclose($fp);
 
-    if (!$ok || $status < 200 || $status >= 300) {
+    if ($binary === false || $status < 200 || $status >= 300) {
+        return null;
+    }
+
+    $image = @imagecreatefromstring($binary);
+    if (!$image) {
+        return null;
+    }
+
+    if (!imagepalettetotruecolor($image)) {
+        // continue; conversion may still succeed for truecolor images
+    }
+
+    $saved = imagewebp($image, $filePath, 80);
+    imagedestroy($image);
+
+    if (!$saved) {
         @unlink($filePath);
         return null;
     }
