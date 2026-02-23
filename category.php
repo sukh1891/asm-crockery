@@ -106,10 +106,14 @@ if ($isVariable) {
 $imgs = array_filter(explode(',', $p['images']));
 $img  = $imgs[0] ?? 'placeholder.webp';
 $isSale = $p['sale_price'] !== null && $p['sale_price'] < $p['regular_price'];
+$saleOffPercent = 0;
+if ($isSale && $p['regular_price'] > 0) {
+    $saleOffPercent = (int) round((($p['regular_price'] - $p['sale_price']) / $p['regular_price']) * 100);
+}
 ?>
 <div class="product-card">
-    <?php if ($isSale): ?>
-        <div class="sale-badge">SALE</div>
+    <?php if ($saleOffPercent > 0): ?>
+        <div class="sale-badge"><?php echo $saleOffPercent; ?>% OFF</div>
     <?php endif; ?>
 
     <a href="/asm-crockery/product/<?php echo $p['slug']; ?>">
