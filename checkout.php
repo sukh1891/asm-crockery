@@ -40,7 +40,13 @@ if ($userLoggedIn) {
 <table class="table">
 <?php foreach ($cartSummary['items'] as $i): ?>
 <tr>
-<td><?php echo htmlspecialchars($i['title']); ?></td>
+<td>
+    <?php echo htmlspecialchars($i['title']); ?>
+    <?php if (!empty($i['variation_label'])): ?>
+        <div class="text-muted small"><?php echo htmlspecialchars($i['variation_label']); ?></div>
+    <?php endif; ?>
+    <div class="text-muted small">Qty: <?php echo intval($i['qty']); ?> × ₹<?php echo number_format((float)$i['price_inr'],2); ?></div>
+</td>
 <td class="text-end">₹<?php echo number_format($i['qty']*$i['price_inr'],2); ?></td>
 </tr>
 <?php endforeach; ?>

@@ -116,18 +116,20 @@ function getCartItems() {
 
     if ($userId) {
         $q = mysqli_query($conn,"
-            SELECT c.*, p.title, p.product_type
+            SELECT c.*, p.title, p.product_type, pv.attributes_json AS variation_label
             FROM cart c
             JOIN products p ON p.id = c.product_id
+            LEFT JOIN product_variations pv ON pv.id = c.variation_id
             WHERE c.user_id='".intval($userId)."'
             ORDER BY c.added_at DESC
         ");
     } else {
         $sid = mysqli_real_escape_string($conn, getSessionId());
         $q = mysqli_query($conn,"
-            SELECT c.*, p.title, p.product_type
+            SELECT c.*, p.title, p.product_type, pv.attributes_json AS variation_label
             FROM cart c
             JOIN products p ON p.id = c.product_id
+            LEFT JOIN product_variations pv ON pv.id = c.variation_id
             WHERE c.session_id='$sid'
             ORDER BY c.added_at DESC
         ");

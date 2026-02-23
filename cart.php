@@ -16,7 +16,10 @@ $cart = getCartSummary($conn);
 <thead>
 <tr>
 <th>Product</th>
+<th width="140">Variation</th>
+<th width="100">Price</th>
 <th width="120">Qty</th>
+<th width="120">Total</th>
 <th width="80"></th>
 </tr>
 </thead>
@@ -27,11 +30,19 @@ $cart = getCartSummary($conn);
 <td><?php echo htmlspecialchars($item['title']); ?></td>
 
 <td>
+<?php echo !empty($item['variation_label']) ? htmlspecialchars($item['variation_label']) : '-'; ?>
+</td>
+
+<td>₹<?php echo number_format((float)$item['price_inr'],2); ?></td>
+
+<td>
 <input type="number"
        min="1"
        value="<?php echo intval($item['qty']); ?>"
        class="form-control form-control-sm qtyInput">
 </td>
+
+<td>₹<?php echo number_format(((float)$item['qty'] * (float)$item['price_inr']),2); ?></td>
 
 <td>
 <button class="btn btn-sm btn-danger removeBtn">✕</button>
