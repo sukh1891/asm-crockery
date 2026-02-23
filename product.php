@@ -85,8 +85,15 @@ $isSimpleInStock = ($product['product_type'] === 'simple' && $product['stock'] =
 <!-- LEFT: IMAGES -->
 <div class="col-md-6 position-relative mb-3">
 
-    <?php if ($product['sale_price'] && $product['sale_price'] < $product['regular_price']): ?>
-        <div class="sale-badge">SALE</div>
+    <?php
+    $saleOffPercent = 0;
+    if ($product['sale_price'] && $product['sale_price'] < $product['regular_price'] && $product['regular_price'] > 0) {
+        $saleOffPercent = (int) round((($product['regular_price'] - $product['sale_price']) / $product['regular_price']) * 100);
+    }
+    ?>
+
+    <?php if ($saleOffPercent > 0): ?>
+        <div class="sale-badge"><?php echo $saleOffPercent; ?>% OFF</div>
     <?php endif; ?>
 
     <div class="product-gallery">
