@@ -490,23 +490,54 @@ a:hover {
     }
 }
 /* ===== DESKTOP HEADER ORDER (LOCKED) ===== */
+/* =========================
+   DESKTOP HEADER STRUCTURE
+   ========================= */
 @media (min-width: 992px) {
 
     .header-inner {
+        display: flex;
+        align-items: center;
         flex-wrap: nowrap;
+        gap: 18px;
     }
 
-    .mobile-menu-toggle { order: 1; display: none; }
+    /* hide hamburger on desktop */
+    .mobile-menu-toggle {
+        display: none;
+        order: 0;
+    }
 
-    .logo { order: 2; }
+    /* LOGO */
+    .logo {
+        order: 1;
+        flex: 0 0 auto;
+    }
 
-    .header-actions { order: 3; }
+    /* MENU LINKS */
+    .main-nav {
+        order: 2;
+        display: flex !important;
+        flex: 1 1 auto;
+        justify-content: flex-start;
+        margin-left: 20px;
+    }
 
-    .search-wrapper { order: 4; width: auto; }
+    /* SEARCH */
+    .search-wrapper {
+        order: 3;
+        flex: 0 0 auto;
+    }
 
-    .main-nav { order: 5; display: flex; }
-    
     .search-wrapper input {
         width: 220px;
+    }
+
+    /* ACCOUNT + CART */
+    .header-actions {
+        order: 4;
+        display: flex;
+        gap: 14px;
+        margin-left: auto;
     }
 }
