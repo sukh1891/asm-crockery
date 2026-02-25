@@ -116,18 +116,24 @@ function getCartItems() {
 
     if ($userId) {
         $q = mysqli_query($conn,"
-            SELECT c.*, p.title, p.product_type
+            SELECT c.*, p.title, p.product_type,
+                   p.weight AS product_weight,
+                   pv.weight AS variation_weight
             FROM cart c
             JOIN products p ON p.id = c.product_id
+            LEFT JOIN product_variations pv ON pv.id = c.variation_id
             WHERE c.user_id='".intval($userId)."'
             ORDER BY c.added_at DESC
         ");
     } else {
         $sid = mysqli_real_escape_string($conn, getSessionId());
         $q = mysqli_query($conn,"
-            SELECT c.*, p.title, p.product_type
+            SELECT c.*, p.title, p.product_type,
+                   p.weight AS product_weight,
+                   pv.weight AS variation_weight
             FROM cart c
             JOIN products p ON p.id = c.product_id
+            LEFT JOIN product_variations pv ON pv.id = c.variation_id
             WHERE c.session_id='$sid'
             ORDER BY c.added_at DESC
         ");
@@ -138,6 +144,26 @@ function getCartItems() {
     return $items;
 }
 
+function normalizeShippingCountry($country) {
+    $normalized = strtolower(trim((string)$country));
+
+    if ($normalized === 'in' || $normalized === 'india') {
+        return 'india';
+    }
+
+    return $normalized;
+}
+
+function calculateShippingCharge($country, $totalWeightKg) {
+    $normalizedCountry = normalizeShippingCountry($country);
+
+    if ($normalizedCountry === 'india') {
+        return 0;
+    }
+
+    return ceil(max(0, (float)$totalWeightKg)) * 1000;
+}
+
 /* =====================
    CART SUMMARY (DB)
 ===================== */
@@ -145,6 +171,8 @@ function getCartSummary($conn) {
     global $conn;
     $items = getCartItems();
     $subtotal = 0;
+    $totalWeight = 0;
+    $country = getUserCountry();
 
     foreach ($items as $item) {
         $qty = max(1, intval($item['qty']));
@@ -152,9 +180,15 @@ function getCartSummary($conn) {
 
         $price = floatval($item['price_inr']);
         $subtotal += $price * $qty;
+
+        $weight = isset($item['variation_weight']) && $item['variation_weight'] !== null
+            ? floatval($item['variation_weight'])
+            : floatval($item['product_weight'] ?? 0);
+
+        $totalWeight += $weight * $qty;
     }
 
-    $shipping = ($subtotal > 0 && $subtotal < 999) ? 99 : 0;
+    $shipping = calculateShippingCharge($country, $totalWeight);
 
     return [
         'items'    => $items,
