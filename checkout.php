@@ -30,6 +30,7 @@ if ($userLoggedIn) {
 <textarea name="address" class="form-control mb-2" placeholder="Address"><?php echo htmlspecialchars($user['address']); ?></textarea>
 <select name="country" class="form-select mb-2">
     <option value="India">India</option>
+    <option value="Other">Other</option>
 </select>
 
 </div>
@@ -81,6 +82,11 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!checkoutBtn) return;
 
     const loggedIn = <?php echo isset($_SESSION['user_id']) ? 'true' : 'false'; ?>;
+    
+    const resetCheckoutButton = function () {
+        checkoutBtn.disabled = false;
+        checkoutBtn.innerText = "Proceed to Pay";
+    };
 
     checkoutBtn.addEventListener('click', async function (e) {
         e.preventDefault();
@@ -139,17 +145,22 @@ document.addEventListener('DOMContentLoaded', function () {
         fd.append('address', address);
         fd.append('country', country);
 
-        const res = await fetch('/asm-crockery/api/checkout/create-order.php', {
-            method: 'POST',
-            body: fd
-        });
-
-        const order = await res.json();
+        let order;
+        try {
+            const res = await fetch('/asm-crockery/api/checkout/create-order.php', {
+                method: 'POST',
+                body: fd
+            });
+            order = await res.json();
+        } catch (err) {
+            alert("Unable to create order. Please try again.");
+            resetCheckoutButton();
+            return;
+        }
 
         if (!order.success) {
             alert(order.message || "Unable to create order");
-            checkoutBtn.disabled = false;
-            checkoutBtn.innerText = "Proceed to Pay";
+            resetCheckoutButton();
             return;
         }
 
@@ -165,21 +176,37 @@ document.addEventListener('DOMContentLoaded', function () {
                 fd2.append('razorpay_order_id', response.razorpay_order_id);
                 fd2.append('razorpay_signature', response.razorpay_signature);
 
-                const res2 = await fetch('/asm-crockery/api/checkout/process.php', {
-                    method: 'POST',
-                    body: fd2
-                });
-
-                const result = await res2.json();
+                let result;
+                try {
+                    const res2 = await fetch('/asm-crockery/api/checkout/process.php', {
+                        method: 'POST',
+                        body: fd2
+                    });
+                    result = await res2.json();
+                } catch (err) {
+                    alert("Payment verification failed. Please try again.");
+                    resetCheckoutButton();
+                    return;
+                }
 
                 if (result.success) {
-                    window.location.href = '/asm-crockery/order-success.php';
+                    const orderNo = encodeURIComponent(result.order_number || '');
+                    window.location.href = '/asm-crockery/order-success.php?order=' + orderNo;
                 } else {
                     alert(result.message || "Payment failed");
-                    checkoutBtn.disabled = false;
-                    checkoutBtn.innerText = "Proceed to Pay";
+                    resetCheckoutButton();
+                }
+            },
+            modal: {
+                ondismiss: function () {
+                    resetCheckoutButton();
                 }
             }
+        });
+
+        rzp.on('payment.failed', function () {
+            alert('Payment failed. Please try again.');
+            resetCheckoutButton();
         });
 
         rzp.open();
