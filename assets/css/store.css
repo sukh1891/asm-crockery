@@ -217,9 +217,11 @@ a:hover {
 }
 
 .product-title {
+    display: block;
     font-size: 0.95rem;
     font-weight: 500;
     margin: 0 0 0.25rem;
+    line-height: 1.35;
 }
 
 .product-price {
@@ -551,25 +553,54 @@ a:hover {
 }
 
 .home-tile-card {
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 8px;
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    color: #fff !important;
 }
 
-.home-tile-card img {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    object-fit: cover;
-    background: #f1f1f1;
+.home-tile-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    gap: 1rem;
+    min-height: 110px;
+}
+
+.home-tile-text {
+    min-width: 0;
 }
 
 .home-tile-title {
-    padding: 0.75rem;
-    text-align: center;
-    font-weight: 600;
+    font-weight: 700;
+    line-height: 1.3;
 }
+
+.home-tile-count {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    margin-top: 0.25rem;
+}
+
+.home-tile-card img {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(255,255,255,0.6);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+    flex: 0 0 auto;
+}
+
+.home-tile-gradient-1 { background: linear-gradient(135deg, #ff6b6b, #f06595); }
+.home-tile-gradient-2 { background: linear-gradient(135deg, #4c6ef5, #15aabf); }
+.home-tile-gradient-3 { background: linear-gradient(135deg, #845ef7, #5f3dc4); }
+.home-tile-gradient-4 { background: linear-gradient(135deg, #38d9a9, #0ca678); }
+.home-tile-gradient-5 { background: linear-gradient(135deg, #f59f00, #f76707); }
+.home-tile-gradient-6 { background: linear-gradient(135deg, #339af0, #5c7cfa); }
+.home-tile-gradient-7 { background: linear-gradient(135deg, #e64980, #c2255c); }
+.home-tile-gradient-8 { background: linear-gradient(135deg, #12b886, #2f9e44); }
 
 @media (max-width: 768px) {
     .home-grid-tiles,
