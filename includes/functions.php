@@ -107,6 +107,70 @@ function getLoggedInUserId() {
     return $_SESSION['user_id'] ?? null;
 }
 
+function setUserRememberLogin($user_id, $days = 30) {
+    global $conn;
+
+    $uid = intval($user_id);
+    if ($uid <= 0) return;
+
+    $selector = bin2hex(random_bytes(8));
+    $validator = bin2hex(random_bytes(32));
+    $token_plain = $selector . ':' . $validator;
+    $token_hash = hash('sha256', $token_plain);
+
+    $expires_ts = time() + ($days * 86400);
+    $expires_sql = date('Y-m-d H:i:s', $expires_ts);
+
+    mysqli_query($conn,
+        "UPDATE users SET remember_token='".mysqli_real_escape_string($conn, $token_hash)."', remember_expires='".mysqli_real_escape_string($conn, $expires_sql)."' WHERE id='$uid'"
+    );
+
+    $is_secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    setcookie('user_remember', $token_plain, [
+        'expires' => $expires_ts,
+        'path' => '/',
+        'secure' => $is_secure,
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+}
+
+function tryRememberUserLogin() {
+    global $conn;
+
+    if (!empty($_SESSION['user_id'])) return intval($_SESSION['user_id']);
+
+    $raw = $_COOKIE['user_remember'] ?? '';
+    if (!$raw || strpos($raw, ':') === false) return null;
+
+    [$selector, $validator] = explode(':', $raw, 2);
+    if (!$selector || !$validator) return null;
+
+    $token_hash = hash('sha256', $selector . ':' . $validator);
+    $token_hash_esc = mysqli_real_escape_string($conn, $token_hash);
+    $now = date('Y-m-d H:i:s');
+
+    $q = mysqli_query($conn,
+        "SELECT id FROM users WHERE remember_token='$token_hash_esc' AND (remember_expires IS NULL OR remember_expires >= '$now') LIMIT 1"
+    );
+
+    if (!$q || mysqli_num_rows($q) === 0) {
+        setcookie('user_remember', '', time() - 3600, '/');
+        return null;
+    }
+
+    $user = mysqli_fetch_assoc($q);
+    $uid = intval($user['id']);
+    if ($uid <= 0) return null;
+
+    $_SESSION['user_id'] = $uid;
+
+    // Rotate token on each successful remember-login
+    setUserRememberLogin($uid);
+
+    return $uid;
+}
+
 /* =====================
    GET CART ITEMS (DB)
 ===================== */
@@ -116,18 +180,24 @@ function getCartItems() {
 
     if ($userId) {
         $q = mysqli_query($conn,"
-            SELECT c.*, p.title, p.product_type
+            SELECT c.*, p.title, p.product_type,
+                   p.weight AS product_weight,
+                   pv.weight AS variation_weight
             FROM cart c
             JOIN products p ON p.id = c.product_id
+            LEFT JOIN product_variations pv ON pv.id = c.variation_id
             WHERE c.user_id='".intval($userId)."'
             ORDER BY c.added_at DESC
         ");
     } else {
         $sid = mysqli_real_escape_string($conn, getSessionId());
         $q = mysqli_query($conn,"
-            SELECT c.*, p.title, p.product_type
+            SELECT c.*, p.title, p.product_type,
+                   p.weight AS product_weight,
+                   pv.weight AS variation_weight
             FROM cart c
             JOIN products p ON p.id = c.product_id
+            LEFT JOIN product_variations pv ON pv.id = c.variation_id
             WHERE c.session_id='$sid'
             ORDER BY c.added_at DESC
         ");
@@ -136,6 +206,26 @@ function getCartItems() {
     $items = [];
     while ($r = mysqli_fetch_assoc($q)) $items[] = $r;
     return $items;
+}
+
+function normalizeShippingCountry($country) {
+    $normalized = strtolower(trim((string)$country));
+
+    if ($normalized === 'in' || $normalized === 'india') {
+        return 'india';
+    }
+
+    return $normalized;
+}
+
+function calculateShippingCharge($country, $totalWeightKg) {
+    $normalizedCountry = normalizeShippingCountry($country);
+
+    if ($normalizedCountry === 'india') {
+        return 0;
+    }
+
+    return ceil(max(0, (float)$totalWeightKg)) * 1000;
 }
 
 /* =====================
@@ -152,9 +242,16 @@ function getCartSummary($conn) {
 
         $price = floatval($item['price_inr']);
         $subtotal += $price * $qty;
+
+        $weight = isset($item['variation_weight']) && $item['variation_weight'] !== null
+            ? floatval($item['variation_weight'])
+            : floatval($item['product_weight'] ?? 0);
+
+        $totalWeight += $weight * $qty;
+
     }
 
-    $shipping = ($subtotal > 0 && $subtotal < 999) ? 99 : 0;
+    $shipping = calculateShippingCharge($country, $totalWeight);
 
     return [
         'items'    => $items,
