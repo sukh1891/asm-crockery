@@ -1,6 +1,7 @@
 <?php
 session_start();
 include '../config/db.php';
+include '../includes/functions.php';
 if (
     !isset($_SESSION['user_id']) &&
     !isset($_SESSION['otp_verified']) &&
@@ -26,7 +27,8 @@ $name    = mysqli_real_escape_string($conn, $data['name'] ?? '');
 $phone   = mysqli_real_escape_string($conn, $data['phone'] ?? '');
 $email   = mysqli_real_escape_string($conn, $data['email'] ?? '');
 $address = mysqli_real_escape_string($conn, $data['address'] ?? '');
-$country = mysqli_real_escape_string($conn, $data['country'] ?? 'India');
+$rawCountry = $data['country'] ?? 'India';
+$country = mysqli_real_escape_string($conn, $rawCountry);
 
 /* ===== Calculate Product Total ===== */
 $total = 0;
@@ -38,16 +40,28 @@ foreach ($cart as $item) {
 $totalWeight = 0;
 foreach ($cart as $item) {
     $pid = intval($item['product_id']);
-    $q = mysqli_query($conn, "SELECT weight FROM products WHERE id='$pid'");
-    $p = mysqli_fetch_assoc($q);
-    $totalWeight += ($p['weight'] ?? 0) * $item['qty'];
+    $vid = !empty($item['variation_id']) ? intval($item['variation_id']) : null;
+
+    $weight = 0;
+    if ($vid) {
+        $vq = mysqli_query($conn, "SELECT weight FROM product_variations WHERE id='$vid' LIMIT 1");
+        $v = mysqli_fetch_assoc($vq);
+        if (isset($v['weight']) && $v['weight'] !== null) {
+            $weight = floatval($v['weight']);
+        }
+    }
+
+    if ($weight <= 0) {
+        $pq = mysqli_query($conn, "SELECT weight FROM products WHERE id='$pid' LIMIT 1");
+        $p = mysqli_fetch_assoc($pq);
+        $weight = floatval($p['weight'] ?? 0);
+    }
+
+    $totalWeight += $weight * intval($item['qty']);
 }
 
 /* ===== Shipping Calculation ===== */
-$shipping = 0;
-if ($country !== 'India') {
-    $shipping = ceil($totalWeight) * 1000;
-}
+$shipping = calculateShippingCharge($rawCountry, $totalWeight);
 
 $finalAmount = $total + $shipping;
 
