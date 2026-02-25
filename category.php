@@ -29,6 +29,13 @@ $seo = seoCategory($category, $breadcrumbs);
 /* ===== HEADER ===== */
 include __DIR__ . '/includes/header.php';
 
+function truncateWords(string $text, int $maxWords = 8): string {
+    $words = preg_split('/\s+/', trim($text));
+    if (!$words) return '';
+    if (count($words) <= $maxWords) return implode(' ', $words);
+    return implode(' ', array_slice($words, 0, $maxWords)) . '...';
+}
+
 /* ===== CHILD CATEGORIES ===== */
 $childCats = mysqli_query($conn,
     "SELECT * FROM categories WHERE parent='{$category['id']}' ORDER BY name"
@@ -121,7 +128,7 @@ if ($isSale && $p['regular_price'] > 0) {
     </a>
 
     <div class="product-card-body">
-        <div class="product-title"><?php echo htmlspecialchars($p['title']); ?></div>
+        <a class="product-title" href="/asm-crockery/product/<?php echo $p['slug']; ?>"><?php echo htmlspecialchars(truncateWords((string)$p['title'])); ?></a>
 
         <div class="price-wrap">
         <?php if ($isVariable): ?>
