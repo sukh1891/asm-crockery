@@ -2,12 +2,12 @@
 //session_start();
 include_once __DIR__ . '/seo.php';
 $seo = $seo ?? seoHome();
-include 'config/db.php';
-include_once 'includes/functions.php';
+include_once __DIR__ . '/../config/db.php';
+include_once __DIR__ . '/functions.php';
 if (session_status() == PHP_SESSION_NONE) session_start();
 if (function_exists('tryRememberUserLogin')) tryRememberUserLogin();
 $wishlist_count = function_exists('getWishlistCount') ? getWishlistCount() : 0;
-include_once 'includes/category-functions.php';
+include_once __DIR__ . '/category-functions.php';
 $categoryTree = getMenuCategories();
 $menuCategories = array_slice(getMenuCategories(), 0, 5);
 ?>
