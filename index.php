@@ -29,14 +29,64 @@ function getCategoryTiles(mysqli $conn, array $ids): array {
             $imgs = array_filter(explode(',', $pr['images']));
             $img = $imgs[0] ?? $img;
         }
+        
+        $countQ = mysqli_query($conn, "SELECT COUNT(*) AS total_items FROM products WHERE category_id='$id'");
+        $countR = $countQ ? mysqli_fetch_assoc($countQ) : null;
 
         $tiles[] = [
             'name' => $cat['name'],
             'slug' => $cat['slug'],
             'image' => $img,
+            'total_items' => (int)($countR['total_items'] ?? 0)
         ];
     }
     return $tiles;
+}
+
+function truncateWords(string $text, int $maxWords = 8): string {
+    $words = preg_split('/\s+/', trim($text));
+    if (!$words) return '';
+    if (count($words) <= $maxWords) return implode(' ', $words);
+    return implode(' ', array_slice($words, 0, $maxWords)) . '...';
+}
+
+function getProductCardPricing(mysqli $conn, array $product): array {
+    $isVariable = ($product['product_type'] ?? '') === 'variable';
+
+    if ($isVariable) {
+        $productId = (int)($product['id'] ?? 0);
+        $vq = mysqli_query(
+            $conn,
+            "SELECT MIN(price_inr) AS min_price FROM product_variations WHERE product_id='$productId'"
+        );
+        $vr = $vq ? mysqli_fetch_assoc($vq) : null;
+        $displayPrice = (float)($vr['min_price'] ?? 0);
+
+        return [
+            'is_variable' => true,
+            'is_sale' => false,
+            'regular_price' => $displayPrice,
+            'sale_price' => null,
+            'off' => 0,
+        ];
+    }
+
+    $regularPrice = (float)($product['regular_price'] ?? 0);
+    $salePrice = isset($product['sale_price']) ? (float)$product['sale_price'] : null;
+    $isSale = $salePrice !== null && $salePrice > 0 && $salePrice < $regularPrice;
+
+    $off = 0;
+    if ($isSale && $regularPrice > 0) {
+        $off = (int)round((($regularPrice - $salePrice) / $regularPrice) * 100);
+    }
+
+    return [
+        'is_variable' => false,
+        'is_sale' => $isSale,
+        'regular_price' => $regularPrice,
+        'sale_price' => $salePrice,
+        'off' => $off,
+    ];
 }
 
 function getHomeProducts(mysqli $conn, string $mode): array {
@@ -81,11 +131,15 @@ $recommendedProducts = getHomeProducts($conn, 'recommended');
     
     <section class="home-categories">
         <h2>Shop by Category</h2>
-        <div class="home-grid-tiles">
-            <?php foreach ($categoryTiles as $cat): ?>
-                <a href="/asm-crockery/category/<?php echo $cat['slug']; ?>" class="home-tile-card">
-                    <img src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($cat['image']); ?>" alt="<?php echo htmlspecialchars($cat['name']); ?>">
-                    <div class="home-tile-title"><?php echo htmlspecialchars($cat['name']); ?></div>
+        <?php foreach ($categoryTiles as $index => $cat): ?>
+                <a href="/asm-crockery/category/<?php echo $cat['slug']; ?>" class="home-tile-card home-tile-gradient-<?php echo ($index % 8) + 1; ?>">
+                    <div class="home-tile-content">
+                        <div class="home-tile-text">
+                            <div class="home-tile-title"><?php echo htmlspecialchars($cat['name']); ?></div>
+                            <div class="home-tile-count"><?php echo (int)$cat['total_items']; ?> items</div>
+                        </div>
+                        <img src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($cat['image']); ?>" alt="<?php echo htmlspecialchars($cat['name']); ?>">
+                    </div>
                 </a>
             <?php endforeach; ?>
         </div>
@@ -93,11 +147,15 @@ $recommendedProducts = getHomeProducts($conn, 'recommended');
     
     <section class="home-categories mt-4">
         <h2>Shop by Brand</h2>
-        <div class="home-grid-tiles">
-            <?php foreach ($brandTiles as $cat): ?>
-                <a href="/asm-crockery/category/<?php echo $cat['slug']; ?>" class="home-tile-card">
-                    <img src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($cat['image']); ?>" alt="<?php echo htmlspecialchars($cat['name']); ?>">
-                    <div class="home-tile-title"><?php echo htmlspecialchars($cat['name']); ?></div>
+        <?php foreach ($brandTiles as $index => $cat): ?>
+                <a href="/asm-crockery/category/<?php echo $cat['slug']; ?>" class="home-tile-card home-tile-gradient-<?php echo ($index % 8) + 1; ?>">
+                    <div class="home-tile-content">
+                        <div class="home-tile-text">
+                            <div class="home-tile-title"><?php echo htmlspecialchars($cat['name']); ?></div>
+                            <div class="home-tile-count"><?php echo (int)$cat['total_items']; ?> items</div>
+                        </div>
+                        <img src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($cat['image']); ?>" alt="<?php echo htmlspecialchars($cat['name']); ?>">
+                    </div>
                 </a>
             <?php endforeach; ?>
         </div>
@@ -113,25 +171,25 @@ function renderHomeProductSection(array $products, string $title): void {
             <?php
             $imgs = array_filter(explode(',', $p['images'] ?? ''));
             $img = $imgs[0] ?? 'placeholder.webp';
-            $isSale = $p['sale_price'] !== null && (float)$p['sale_price'] < (float)$p['regular_price'];
-            $off = 0;
-            if ($isSale && (float)$p['regular_price'] > 0) {
-                $off = (int)round((((float)$p['regular_price'] - (float)$p['sale_price']) / (float)$p['regular_price']) * 100);
-            }
+            $pricing = getProductCardPricing($conn, $p);
             ?>
             <div class="product-card">
-                <?php if ($off > 0): ?><div class="sale-badge"><?php echo $off; ?>% OFF</div><?php endif; ?>
+                <?php if ($pricing['off'] > 0): ?><div class="sale-badge"><?php echo $pricing['off']; ?>% OFF</div><?php endif; ?>
                 <a href="/asm-crockery/product/<?php echo htmlspecialchars($p['slug']); ?>">
                     <img src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($img); ?>" loading="lazy" alt="<?php echo htmlspecialchars($p['title']); ?>">
                 </a>
                 <div class="product-card-body">
-                    <div class="product-title"><?php echo htmlspecialchars($p['title']); ?></div>
+                    <a class="product-title" href="/asm-crockery/product/<?php echo htmlspecialchars($p['slug']); ?>">
+                        <?php echo htmlspecialchars(truncateWords((string)$p['title'])); ?>
+                    </a>
                     <div class="price-wrap">
-                        <?php if ($isSale): ?>
-                            <span class="price-regular">₹<?php echo number_format((float)$p['regular_price'],2); ?></span>
-                            <span class="price-sale">₹<?php echo number_format((float)$p['sale_price'],2); ?></span>
+                        <?php if ($pricing['is_variable']): ?>
+                            <span class="price-normal">₹<?php echo number_format((float)$pricing['regular_price'],2); ?></span>
+                        <?php elseif ($pricing['is_sale']): ?>
+                            <span class="price-regular">₹<?php echo number_format((float)$pricing['regular_price'],2); ?></span>
+                            <span class="price-sale">₹<?php echo number_format((float)$pricing['sale_price'],2); ?></span>
                         <?php else: ?>
-                            <span class="price-normal">₹<?php echo number_format((float)$p['regular_price'],2); ?></span>
+                            <span class="price-normal">₹<?php echo number_format((float)$pricing['regular_price'],2); ?></span>
                         <?php endif; ?>
                     </div>
                 </div>
