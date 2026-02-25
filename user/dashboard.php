@@ -25,7 +25,7 @@ $recent_q = mysqli_query($conn, "SELECT * FROM orders WHERE user_id='$user_id' O
       <div class="card p-3 mb-3">
         <h5><?php echo htmlspecialchars($u['name'] ?: ''); ?></h5>
         <p><?php echo htmlspecialchars($u['phone']); ?><br><?php echo htmlspecialchars($u['email']); ?></p>
-        <a href="/user/addresses.php" class="btn btn-sm btn-outline-primary">Manage Addresses</a>
+        <a href="/asm-crockery/user/addresses.php" class="btn btn-sm btn-outline-primary">Manage Addresses</a>
       </div>
 
       <div class="card p-3">
@@ -50,12 +50,12 @@ $recent_q = mysqli_query($conn, "SELECT * FROM orders WHERE user_id='$user_id' O
                   <td><?php echo $o['created_at']; ?></td>
                   <td>₹<?php echo number_format($o['amount'],2); ?></td>
                   <td><?php echo ucfirst($o['status']); ?></td>
-                  <td><a href="/user/order-details.php?id=<?php echo $o['id']; ?>" class="btn btn-sm btn-primary">View</a></td>
+                  <td><a href="/asm-crockery/user/order-details.php?id=<?php echo $o['id']; ?>" class="btn btn-sm btn-primary">View</a></td>
                 </tr>
               <?php endwhile; ?>
             </tbody>
           </table>
-          <a href="/user/orders.php" class="btn btn-sm btn-outline-secondary">View All Orders</a>
+          <a href="/asm-crockery/user/orders.php" class="btn btn-sm btn-outline-secondary">View All Orders</a>
         <?php endif; ?>
       </div>
     </div>
