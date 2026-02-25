@@ -131,6 +131,7 @@ $recommendedProducts = getHomeProducts($conn, 'recommended');
     
     <section class="home-categories">
         <h2>Shop by Category</h2>
+        <div class="home-grid-tiles">
         <?php foreach ($categoryTiles as $index => $cat): ?>
                 <a href="/asm-crockery/category/<?php echo $cat['slug']; ?>" class="home-tile-card home-tile-gradient-<?php echo ($index % 8) + 1; ?>">
                     <div class="home-tile-content">
@@ -147,6 +148,7 @@ $recommendedProducts = getHomeProducts($conn, 'recommended');
     
     <section class="home-categories mt-4">
         <h2>Shop by Brand</h2>
+        <div class="home-grid-tiles">
         <?php foreach ($brandTiles as $index => $cat): ?>
                 <a href="/asm-crockery/category/<?php echo $cat['slug']; ?>" class="home-tile-card home-tile-gradient-<?php echo ($index % 8) + 1; ?>">
                     <div class="home-tile-content">
@@ -162,7 +164,7 @@ $recommendedProducts = getHomeProducts($conn, 'recommended');
     </section>
 
 <?php
-function renderHomeProductSection(array $products, string $title): void {
+function renderHomeProductSection(mysqli $conn, array $products, string $title): void {
 ?>
 <section class="mt-4">
     <h2><?php echo htmlspecialchars($title); ?></h2>
@@ -200,9 +202,9 @@ function renderHomeProductSection(array $products, string $title): void {
 <?php
 }
 
-renderHomeProductSection($recentProducts, 'Recently Added');
-renderHomeProductSection($discountProducts, 'Biggest Discount');
-renderHomeProductSection($recommendedProducts, 'Recommended for You');
+renderHomeProductSection($conn, $recentProducts, 'Recently Added');
+renderHomeProductSection($conn, $discountProducts, 'Biggest Discount');
+renderHomeProductSection($conn, $recommendedProducts, 'Recommended for You');
 ?>
 
 </div>
