@@ -45,7 +45,7 @@ $items_q = mysqli_query($conn, "SELECT oi.*, p.title AS product_name FROM order_
         </tbody>
       </table>
 
-      <a href="/admin/invoice.php?id=<?php echo $order_id; ?>" class="btn btn-outline-secondary" target="_blank">Download Invoice (PDF)</a>
+      <a href="/asm-crockery/admin/invoice.php?id=<?php echo $order_id; ?>" class="btn btn-outline-secondary" target="_blank">Download Invoice (PDF)</a>
     </div>
 
     <div class="col-md-4">
@@ -66,7 +66,7 @@ $items_q = mysqli_query($conn, "SELECT oi.*, p.title AS product_name FROM order_
 <script>
 document.getElementById('reorderBtn').addEventListener('click', function(){
   if (!confirm('Add items from this order into your cart?')) return;
-  fetch('/api/user/reorder.php', {
+  fetch('/asm-crockery/api/user/reorder.php', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ order_id: this.dataset.order })
