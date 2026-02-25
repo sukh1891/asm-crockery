@@ -541,3 +541,43 @@ a:hover {
         margin-left: auto;
     }
 }
+.home-banner img {
+    width: 100%;
+    border-radius: 8px;
+    display: block;
+}
+
+.home-grid-tiles,
+.home-grid-products {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.home-tile-card {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.home-tile-card img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    background: #f1f1f1;
+}
+
+.home-tile-title {
+    padding: 0.75rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .home-grid-tiles,
+    .home-grid-products {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
