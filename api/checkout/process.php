@@ -4,6 +4,8 @@ session_start();
 require_once '../../config/db.php';
 require_once '../../config/keys.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/mailer.php';
+require_once '../../vendor/autoload.php';
 
 use Razorpay\Api\Api;
 use Razorpay\Api\Errors\SignatureVerificationError;
@@ -13,9 +15,9 @@ header('Content-Type: application/json');
 /* =====================
    BASIC VALIDATION
 ===================== */
-$paymentId   = $_POST['razorpay_payment_id'] ?? '';
-$orderId    = $_POST['razorpay_order_id'] ?? '';
-$signature  = $_POST['razorpay_signature'] ?? '';
+$paymentId = $_POST['razorpay_payment_id'] ?? '';
+$orderId = $_POST['razorpay_order_id'] ?? '';
+$signature = $_POST['razorpay_signature'] ?? '';
 
 if (!$paymentId || !$orderId || !$signature) {
     http_response_code(400);
@@ -29,12 +31,8 @@ if (!$paymentId || !$orderId || !$signature) {
 /* =====================
    FETCH ORDER
 ===================== */
-$stmt = $conn->prepare("
-    SELECT * FROM orders
-    WHERE gateway_order_id = ?
-    LIMIT 1
-");
-$stmt->bind_param("s", $orderId);
+$stmt = $conn->prepare('SELECT * FROM orders WHERE gateway_order_id = ? LIMIT 1');
+$stmt->bind_param('s', $orderId);
 $stmt->execute();
 $order = $stmt->get_result()->fetch_assoc();
 
@@ -53,7 +51,9 @@ if (!$order) {
 if ($order['status'] === 'paid') {
     echo json_encode([
         'success' => true,
-        'message' => 'Order already processed'
+        'message' => 'Order already processed',
+        'order_id' => intval($order['id']),
+        'order_number' => $order['order_number']
     ]);
     exit;
 }
@@ -73,11 +73,9 @@ try {
 } catch (SignatureVerificationError $e) {
 
     // Mark order failed
-    $conn->query("
-        UPDATE orders 
-        SET status='failed' 
-        WHERE id='".intval($order['id'])."'
-    ");
+    $stmt = $conn->prepare("UPDATE orders SET status='failed' WHERE id=?");
+    $stmt->bind_param('i', $order['id']);
+    $stmt->execute();
 
     http_response_code(400);
     echo json_encode([
@@ -97,12 +95,8 @@ try {
     /* =====================
        UPDATE ORDER
     ===================== */
-    $stmt = $conn->prepare("
-        UPDATE orders
-        SET status='paid', payment_id=?
-        WHERE id=?
-    ");
-    $stmt->bind_param("si", $paymentId, $order['id']);
+    $stmt = $conn->prepare("UPDATE orders SET status='paid', payment_id=? WHERE id=?");
+    $stmt->bind_param('si', $paymentId, $order['id']);
     $stmt->execute();
 
     /* =====================
@@ -114,12 +108,10 @@ try {
 
         $productId   = intval($item['product_id']);
         $variationId = !empty($item['variation_id']) ? intval($item['variation_id']) : null;
-        $qty         = max(1, intval($item['qty']));
-        $price       = 0;
+        $qty = max(1, intval($item['qty']));
+        $price = 0;
 
-        // VARIABLE PRODUCT
-        if ($item['product_type'] === 'variable' && $variationId) {
-
+        if (($item['product_type'] ?? '') === 'variable' && $variationId) {
             $vq = mysqli_query(
                 $conn,
                 "SELECT regular_price, sale_price 
@@ -133,12 +125,12 @@ try {
                 : floatval($v['regular_price']);
 
             // reduce stock (if applicable)
-            mysqli_query(
+            /*mysqli_query(
                 $conn,
                 "UPDATE product_variations 
                  SET stock = GREATEST(stock - $qty, 0)
                  WHERE id='$variationId'"
-            );
+            );*/
 
         } 
         // SIMPLE PRODUCT
@@ -156,12 +148,12 @@ try {
                 ? floatval($p['sale_price'])
                 : floatval($p['regular_price']);
 
-            mysqli_query(
+            /*mysqli_query(
                 $conn,
                 "UPDATE products 
                  SET stock = GREATEST(stock - $qty, 0)
                  WHERE id='$productId'"
-            );
+            );*/
         }
 
         // insert order_items
@@ -187,12 +179,14 @@ try {
     $userId = getLoggedInUserId();
 
     if ($userId) {
-        $conn->query("DELETE FROM cart WHERE user_id='".intval($userId)."'");
+        $stmt = $conn->prepare('DELETE FROM cart WHERE user_id=?');
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
     } else {
         $sess = getSessionId();
-        $conn->query(
-            "DELETE FROM cart WHERE session_id='".mysqli_real_escape_string($conn,$sess)."'"
-        );
+        $stmt = $conn->prepare('DELETE FROM cart WHERE session_id=?');
+        $stmt->bind_param('s', $sess);
+        $stmt->execute();
     }
 
     unset($_SESSION['pending_order_id']);
@@ -214,7 +208,10 @@ try {
 /* =====================
    SUCCESS RESPONSE
 ===================== */
+sendOrderConfirmation(intval($order['id']));
+
 echo json_encode([
     'success' => true,
-    'order_id' => $order['id']
+    'order_id' => intval($order['id']),
+    'order_number' => $order['order_number']
 ]);
