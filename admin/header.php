@@ -37,6 +37,10 @@ include 'auth-check.php';
                 </li>
 
                 <li class="nav-item">
+                    <a class="nav-link" href="homepage.php">Home Page</a>
+                </li>
+
+                <li class="nav-item">
                     <a class="nav-link" href="coupons.php">Coupons</a>
                 </li>
 
