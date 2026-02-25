@@ -60,8 +60,13 @@ function sendOrderConfirmation($order_id) {
         </tr>";
     }
 
-    $currency_symbol = ($order['currency'] == "INR") ? "₹" : "$";
+    $currency_symbol = (($order['currency'] ?? 'INR') == "INR") ? "₹" : "$";
     $display_total = $currency_symbol . number_format($order['amount'], 2);
+
+    $shippingAddress = nl2br(htmlspecialchars((string)($order['address'] ?? '')));
+    $city = htmlspecialchars((string)($order['city'] ?? ''));
+    $zip = htmlspecialchars((string)($order['zip'] ?? ''));
+    $cityZip = trim($city . ($city !== '' && $zip !== '' ? ' - ' : '') . $zip);
 
     // Build HTML email
     $email_html = "
@@ -91,8 +96,9 @@ function sendOrderConfirmation($order_id) {
 
       <p style='margin-top:18px;'>
         <strong>Shipping to:</strong><br>
-        ".nl2br(htmlspecialchars($order['address'])).", ".htmlspecialchars($order['city'])." - ".htmlspecialchars($order['zip'])."<br>
-        Phone: ".htmlspecialchars($order['phone'])."
+        {$shippingAddress}
+        ".($cityZip !== '' ? '<br>'.$cityZip : '')."<br>
+        Phone: ".htmlspecialchars((string)($order['phone'] ?? ''))."
       </p>
 
       <p>If you have any queries, reply to this email or contact us at {$ADMIN_EMAIL}.</p>
