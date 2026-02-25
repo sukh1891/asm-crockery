@@ -235,6 +235,8 @@ function getCartSummary($conn) {
     global $conn;
     $items = getCartItems();
     $subtotal = 0;
+    $totalWeight = 0;
+    $country = getUserCountry();
 
     foreach ($items as $item) {
         $qty = max(1, intval($item['qty']));
