@@ -1,6 +1,5 @@
 <?php
 include '../includes/header.php';
-include '../includes/functions.php';
 include 'auth-check.php';
 
 $user_id = intval($_SESSION['user_id']);
