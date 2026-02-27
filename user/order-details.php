@@ -17,45 +17,6 @@ $order = mysqli_fetch_assoc($q);
 $items_q = mysqli_query($conn, "SELECT oi.*, p.title AS product_name FROM order_items oi LEFT JOIN products p ON oi.product_id = p.id WHERE oi.order_id='$order_id'");
 $trackingId = trim($order['tracking_id'] ?? '');
 $status = strtolower(trim($order['status'] ?? 'pending'));
-$trackingUpdates = [];
-
-$trackingUpdates[] = [
-    'label' => 'Order placed',
-    'detail' => date('d M Y, h:i A', strtotime($order['created_at']))
-];
-
-if ($trackingId !== '') {
-    $trackingUpdates[] = [
-        'label' => 'Shipment tracking ID assigned',
-        'detail' => $trackingId
-    ];
-}
-
-if ($status === 'shipped') {
-    $trackingUpdates[] = [
-        'label' => 'Shipment dispatched',
-        'detail' => 'Your order is in transit.'
-    ];
-} elseif ($status === 'paid') {
-    $trackingUpdates[] = [
-        'label' => 'Payment confirmed',
-        'detail' => 'Your order is being prepared for shipment.'
-    ];
-} elseif ($status === 'cancelled') {
-    $trackingUpdates[] = [
-        'label' => 'Order cancelled',
-        'detail' => 'This order has been cancelled.'
-    ];
-} else {
-    $trackingUpdates[] = [
-        'label' => 'Order processing',
-        'detail' => 'We are preparing your order.'
-    ];
-}
-
-$trackingSearchUrl = $trackingId !== ''
-    ? 'https://www.17track.net/en/track?nums=' . urlencode($trackingId)
-    : '';
 ?>
 
 <div class="container">
@@ -93,18 +54,12 @@ $trackingSearchUrl = $trackingId !== ''
         <p><strong>Status:</strong> <?php echo ucfirst($order['status']); ?></p>
         <?php if ($trackingId !== ''): ?>
           <p class="mb-1"><strong>Tracking ID:</strong> <?php echo htmlspecialchars($trackingId); ?></p>
-          <p class="small text-muted">Latest shipment updates</p>
-          <ul class="small ps-3 mb-2">
-            <?php foreach ($trackingUpdates as $update): ?>
-              <li>
-                <strong><?php echo htmlspecialchars($update['label']); ?>:</strong>
-                <?php echo htmlspecialchars($update['detail']); ?>
-              </li>
-            <?php endforeach; ?>
-          </ul>
-          <a class="btn btn-sm btn-outline-primary mb-2" href="<?php echo htmlspecialchars($trackingSearchUrl); ?>" target="_blank" rel="noopener">Track Shipment</a>
-        <?php else: ?>
-          <p class="small text-muted">Tracking updates will appear here once shipment ID is added by admin.</p>
+        <form method="post" action="https://www.trackon.in/courier-tracking">
+            <input type="hidden" value="<?php echo $trackingId; ?>" name="awbSingleTrackingId"/>
+            <button type="submit" title="Track" class="btn btn-default" name="submit" value="Submit">
+                                                                                                    Track
+                                                                                                </button>
+        </form>
         <?php endif; ?>
         <p><strong>Total:</strong> ₹<?php echo number_format($order['amount'],2); ?></p>
         <p><strong>Payment:</strong> <?php echo htmlspecialchars($order['payment_id'] ?: 'N/A'); ?></p>
