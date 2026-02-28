@@ -92,7 +92,7 @@ try {
         (user_id, name, phone, email, address, country, total_amount, shipping_amount, coupon_code, discount_amount, amount, currency, status, gateway_order_id)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'INR', 'pending', ?)"
     );
-
+    $couponCode = $couponSummary['valid'] ? $couponSummary['code'] : null;
     $stmt->bind_param(
         'isssssddsdds',
         $userId,
@@ -103,7 +103,7 @@ try {
         $country,
         $subtotal,
         $shipping,
-        $couponSummary['valid'] ? $couponSummary['code'] : null,
+        $couponCode,
         $discount,
         $amount,
         $gatewayOrderId
