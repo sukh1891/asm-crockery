@@ -228,6 +228,113 @@ function calculateShippingCharge($country, $totalWeightKg) {
     return ceil(max(0, (float)$totalWeightKg)) * 1000;
 }
 
+function ensureOrdersCouponColumns() {
+    global $conn;
+
+    $couponColumn = mysqli_query($conn, "SHOW COLUMNS FROM orders LIKE 'coupon_code'");
+    if ($couponColumn && mysqli_num_rows($couponColumn) === 0) {
+        @mysqli_query($conn, "ALTER TABLE orders ADD COLUMN coupon_code VARCHAR(50) DEFAULT NULL AFTER shipping_amount");
+    }
+
+    $discountColumn = mysqli_query($conn, "SHOW COLUMNS FROM orders LIKE 'discount_amount'");
+    if ($discountColumn && mysqli_num_rows($discountColumn) === 0) {
+        @mysqli_query($conn, "ALTER TABLE orders ADD COLUMN discount_amount DECIMAL(10,2) DEFAULT 0.00 AFTER coupon_code");
+    }
+}
+
+function getAppliedCouponForSubtotal($subtotal, $userId = null) {
+    global $conn;
+
+    $code = strtoupper(trim($_SESSION['applied_coupon'] ?? ''));
+    $subtotal = round(floatval($subtotal), 2);
+
+    if ($code === '' || $subtotal <= 0) {
+        return [
+            'code' => '',
+            'discount' => 0,
+            'coupon' => null,
+            'valid' => false
+        ];
+    }
+
+    $today = date('Y-m-d');
+    $codeEsc = mysqli_real_escape_string($conn, $code);
+    $q = mysqli_query(
+        $conn,
+        "SELECT * FROM coupons
+         WHERE code='$codeEsc'
+           AND status=1
+           AND (start_date IS NULL OR start_date <= '$today')
+           AND (end_date IS NULL OR end_date >= '$today')
+         LIMIT 1"
+    );
+
+    if (!$q || mysqli_num_rows($q) === 0) {
+        $_SESSION['applied_coupon'] = '';
+        return [
+            'code' => $code,
+            'discount' => 0,
+            'coupon' => null,
+            'valid' => false
+        ];
+    }
+
+    $coupon = mysqli_fetch_assoc($q);
+
+    if ($subtotal < floatval($coupon['min_order'])) {
+        $_SESSION['applied_coupon'] = '';
+        return [
+            'code' => $code,
+            'discount' => 0,
+            'coupon' => $coupon,
+            'valid' => false
+        ];
+    }
+
+    if ($userId && !empty($coupon['user_limit'])) {
+        ensureOrdersCouponColumns();
+        $usage = mysqli_fetch_assoc(mysqli_query(
+            $conn,
+            "SELECT COUNT(*) AS c FROM orders
+             WHERE user_id='".intval($userId)."'
+               AND coupon_code='".mysqli_real_escape_string($conn, $code)."'"
+        ));
+
+        if (intval($usage['c'] ?? 0) >= intval($coupon['user_limit'])) {
+            $_SESSION['applied_coupon'] = '';
+            return [
+                'code' => $code,
+                'discount' => 0,
+                'coupon' => $coupon,
+                'valid' => false
+            ];
+        }
+    }
+
+    if (!empty($coupon['usage_limit']) && intval($coupon['used_count']) >= intval($coupon['usage_limit'])) {
+        $_SESSION['applied_coupon'] = '';
+        return [
+            'code' => $code,
+            'discount' => 0,
+            'coupon' => $coupon,
+            'valid' => false
+        ];
+    }
+
+    $discount = $coupon['type'] === 'percent'
+        ? ($subtotal * floatval($coupon['amount']) / 100)
+        : floatval($coupon['amount']);
+
+    $discount = min(round($discount, 2), $subtotal);
+
+    return [
+        'code' => $code,
+        'discount' => $discount,
+        'coupon' => $coupon,
+        'valid' => true
+    ];
+}
+
 /* =====================
    CART SUMMARY (DB)
 ===================== */
