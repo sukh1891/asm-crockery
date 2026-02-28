@@ -60,7 +60,9 @@ foreach ($cartItems as $item) {
 }
 
 $shipping = calculateShippingCharge($country, $totalWeight);
-$amount = round($subtotal + $shipping, 2);
+$couponSummary = getAppliedCouponForSubtotal($subtotal, $userId);
+$discount = floatval($couponSummary['discount'] ?? 0);
+$amount = round($subtotal + $shipping - $discount, 2);
 
 if ($amount <= 0) {
     http_response_code(400);
@@ -83,14 +85,16 @@ try {
 
     $gatewayOrderId = $razorpayOrder['id'];
 
+    ensureOrdersCouponColumns();
+    
     $stmt = $conn->prepare(
         "INSERT INTO orders
-        (user_id, name, phone, email, address, country, total_amount, shipping_amount, amount, currency, status, gateway_order_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'INR', 'pending', ?)"
+        (user_id, name, phone, email, address, country, total_amount, shipping_amount, coupon_code, discount_amount, amount, currency, status, gateway_order_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'INR', 'pending', ?)"
     );
 
     $stmt->bind_param(
-        'isssssddds',
+        'isssssddsdds',
         $userId,
         $name,
         $phone,
@@ -99,6 +103,8 @@ try {
         $country,
         $subtotal,
         $shipping,
+        $couponSummary['valid'] ? $couponSummary['code'] : null,
+        $discount,
         $amount,
         $gatewayOrderId
     );
