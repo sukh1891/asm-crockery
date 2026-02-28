@@ -6,6 +6,10 @@ require_once 'includes/header.php';
 
 $cartSummary = getCartSummary($conn);
 
+$appliedCouponSummary = getAppliedCouponForSubtotal($cartSummary['subtotal'], $_SESSION['user_id'] ?? null);
+$couponDiscount = floatval($appliedCouponSummary['discount'] ?? 0);
+$grandTotal = round($cartSummary['total'] - $couponDiscount, 2);
+
 $userLoggedIn = isset($_SESSION['user_id']);
 $user = ['name'=>'','email'=>'','phone'=>'','address'=>''];
 
@@ -46,8 +50,16 @@ if ($userLoggedIn) {
 </tr>
 <?php endforeach; ?>
 <tr>
-<th>Total</th>
+<th>Subtotal + Shipping</th>
 <th class="text-end">₹<?php echo number_format($cartSummary['total'],2); ?></th>
+</tr>
+<tr>
+<th>Coupon Discount</th>
+<th class="text-end text-success">-₹<?php echo number_format($couponDiscount,2); ?></th>
+</tr>
+<tr>
+<th>Total</th>
+<th class="text-end">₹<?php echo number_format($grandTotal,2); ?></th>
 </tr>
 </table>
 
