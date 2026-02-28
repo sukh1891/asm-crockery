@@ -225,3 +225,4 @@ document.querySelectorAll('.applyAvailableCouponBtn').forEach(btn => {
     });
 });
 </script>
+<?php include 'includes/footer.php'; ?>
