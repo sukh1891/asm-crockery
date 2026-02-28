@@ -120,6 +120,8 @@ $items = mysqli_query($conn,"
 <div class="card-body">
 <p><strong>Product Total:</strong> ₹<?php echo number_format($order['total_amount'],2); ?></p>
 <p><strong>Shipping:</strong> ₹<?php echo number_format($order['shipping_amount'],2); ?></p>
+<p><strong>Coupon Code:</strong> <?php echo !empty($order['coupon_code']) ? htmlspecialchars($order['coupon_code']) : 'N/A'; ?></p>
+<p><strong>Discount:</strong> -₹<?php echo number_format(floatval($order['discount_amount'] ?? 0),2); ?></p>
 <p><strong>Final Amount:</strong>
 <strong>₹<?php echo number_format($order['amount'],2); ?></strong></p>
 </div>
