@@ -190,6 +190,12 @@ try {
     }
 
     unset($_SESSION['pending_order_id']);
+    unset($_SESSION['applied_coupon']);
+
+    if (!empty($order['coupon_code'])) {
+        $couponCodeEsc = mysqli_real_escape_string($conn, $order['coupon_code']);
+        mysqli_query($conn, "UPDATE coupons SET used_count = used_count + 1 WHERE code='$couponCodeEsc'");
+    }
 
     $conn->commit();
 
