@@ -163,9 +163,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 method: 'POST',
                 body: fd
             });
-            order = await res.json();
+            const raw = await res.text();
+            try {
+                order = JSON.parse(raw);
+            } catch (parseErr) {
+                throw new Error(raw || 'Unable to create order. Please try again.');
+            }
         } catch (err) {
-            alert("Unable to create order. Please try again.");
+            alert(err.message || "Unable to create order. Please try again.");
             resetCheckoutButton();
             return;
         }
