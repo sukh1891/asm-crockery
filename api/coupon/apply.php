@@ -31,20 +31,24 @@ if ($cart_total <= 0) {
     exit;
 }
 
-if ($cart_total < floatval($c['min_order'])) {
-    echo json_encode(['success'=>false,'msg'=>'Minimum order ₹'.number_format($c['min_order'], 2).' required']);
-    exit;
-}
-
 // user limit
 if (empty($couponSummary['valid'])) {
+    $minOrder = floatval($couponSummary['coupon']['min_order'] ?? 0);
+    if ($minOrder > 0 && $cart_total < $minOrder) {
+        echo json_encode([
+            'success' => false,
+            'msg' => 'Minimum order ₹' . number_format($minOrder, 2) . ' required'
+        ]);
+        exit;
+    }
+
     echo json_encode([
         'success'=>false,
         'msg'=>'Invalid or expired coupon'
     ]);
     exit;
 }
-
+$_SESSION['applied_coupon'] = $couponSummary['code'];
 echo json_encode([
     'success'=>true,
     'discount'=>floatval($couponSummary['discount']),
