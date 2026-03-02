@@ -197,14 +197,21 @@ $currentBrandIds = csvIdsToArray($settings['brand_ids'] ?? '');
     const { fetchFile } = window.FFmpegUtil;
     const ffmpeg = new FFmpeg();
     let ffmpegLoaded = false;
+    const conversionState = {};
+
+    const withTimeout = (promise, ms) => Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
+    ]);
 
     const ensureLoaded = async () => {
         if (ffmpegLoaded) return true;
         try {
-            await ffmpeg.load({
+            await withTimeout(ffmpeg.load({
                 coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
-                wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm'
-            });
+                wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm',
+                workerURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.worker.js'
+            }), 45000);
             ffmpegLoaded = true;
             return true;
         } catch (e) {
@@ -239,14 +246,17 @@ $currentBrandIds = csvIdsToArray($settings['brand_ids'] ?? '');
 
             fullHidden.value = '';
             previewHidden.value = '';
+            conversionState[slot] = false;
             if (!file) {
                 setStatus(slot, '');
+                conversionState[slot] = false;
                 return;
             }
-
+            conversionState[slot] = true;
             setStatus(slot, 'Preparing video...');
             const ok = await ensureLoaded();
             if (!ok) {
+                conversionState[slot] = false;
                 setStatus(slot, 'Unable to load FFmpeg WebAssembly. Please check internet and try again.', true);
                 return;
             }
@@ -300,10 +310,7 @@ $currentBrandIds = csvIdsToArray($settings['brand_ids'] ?? '');
 
     if (form) {
         form.addEventListener('submit', function (e) {
-            const pending = Array.from(document.querySelectorAll('.watch-buy-status')).some((el) => {
-                const t = (el.textContent || '').toLowerCase();
-                return t.includes('preparing') || t.includes('converting') || t.includes('generating');
-            });
+            const pending = Object.values(conversionState).some((isConverting) => isConverting);
             if (pending) {
                 e.preventDefault();
                 alert('Please wait for video conversion to finish before saving.');
