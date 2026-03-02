@@ -3,6 +3,25 @@ include '../config/db.php';
 include '../includes/homepage-config.php';
 include 'header.php';
 
+function convertVideoToWebm(string $inputPath, string $outputPath): bool {
+    $ffmpeg = trim((string)shell_exec('command -v ffmpeg 2>/dev/null'));
+    if ($ffmpeg === '') {
+        return false;
+    }
+
+    $cmd = escapeshellcmd($ffmpeg)
+        . ' -y -i ' . escapeshellarg($inputPath)
+        . ' -c:v libvpx-vp9 -b:v 0 -crf 34 -vf "scale=720:-2" -row-mt 1 -deadline good -cpu-used 4 '
+        . '-c:a libopus -b:a 96k '
+        . escapeshellarg($outputPath)
+        . ' 2>&1';
+
+    exec($cmd, $output, $code);
+    return $code === 0 && file_exists($outputPath) && filesize($outputPath) > 0;
+}
+
+$currentWatchBuyItems = getWatchBuyItems($settings['watch_buy_videos'] ?? '');
+
 $msg = '';
 $settings = getHomepageSettings($conn);
 
@@ -28,23 +47,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+    
+    $watchBuyItems = [];
+    for ($i = 1; $i <= 4; $i++) {
+        $existingVideo = trim((string)($_POST['watch_buy_existing_video'][$i] ?? ''));
+        $productUrl = trim((string)($_POST['watch_buy_product_url'][$i] ?? ''));
+        $videoPath = $existingVideo;
+
+        if (!empty($_FILES['watch_buy_video']['name'][$i]) && is_uploaded_file($_FILES['watch_buy_video']['tmp_name'][$i])) {
+            $uploadDir = '../assets/uploads/homepage/videos';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0775, true);
+            }
+
+            $tmpInput = $_FILES['watch_buy_video']['tmp_name'][$i];
+            $finalFile = 'watch_buy_' . $i . '_' . time() . '_' . mt_rand(1000, 9999) . '.webm';
+            $finalPath = $uploadDir . '/' . $finalFile;
+
+            if (convertVideoToWebm($tmpInput, $finalPath)) {
+                $videoPath = 'homepage/videos/' . $finalFile;
+            }
+        }
+
+        if ($videoPath !== '' && $productUrl !== '') {
+            $watchBuyItems[] = [
+                'video' => $videoPath,
+                'product_url' => $productUrl,
+            ];
+        }
+    }
 
     $heroImageEsc = $heroImage ? mysqli_real_escape_string($conn, $heroImage) : '';
     $heroUrlEsc = mysqli_real_escape_string($conn, $heroUrl);
     $categoryCsv = mysqli_real_escape_string($conn, idsArrayToCsv($selectedCategories));
     $brandCsv = mysqli_real_escape_string($conn, idsArrayToCsv($selectedBrands));
+    $watchBuyEsc = mysqli_real_escape_string($conn, json_encode($watchBuyItems));
 
     mysqli_query($conn, "
         UPDATE homepage_settings
         SET hero_image=" . ($heroImage ? "'$heroImageEsc'" : "NULL") . ",
             hero_url=" . ($heroUrl !== '' ? "'$heroUrlEsc'" : "NULL") . ",
             category_ids='$categoryCsv',
-            brand_ids='$brandCsv'
+            brand_ids='$brandCsv',
+            watch_buy_videos='$watchBuyEsc'
         WHERE id=1
     ");
 
     $msg = 'Homepage settings updated.';
     $settings = getHomepageSettings($conn);
+    $currentWatchBuyItems = getWatchBuyItems($settings['watch_buy_videos'] ?? '');
 }
 
 $allCategories = mysqli_query($conn, "SELECT id, name FROM categories ORDER BY name ASC");
@@ -88,6 +139,27 @@ $currentBrandIds = csvIdsToArray($settings['brand_ids'] ?? '');
                 <?php endwhile; ?>
             </select>
             <small class="text-muted">Hold Ctrl/Cmd to select multiple.</small>
+        </div>
+    </div>
+    
+    <div class="card mb-3">
+        <div class="card-header">Watch &amp; Buy Section</div>
+        <div class="card-body">
+            <p class="text-muted">Upload up to 4 vertical videos. Videos are converted to compressed WebM automatically.</p>
+            <?php for ($i = 1; $i <= 4; $i++): ?>
+                <?php $item = $currentWatchBuyItems[$i - 1] ?? ['video' => '', 'product_url' => '']; ?>
+                <div class="border rounded p-3 mb-3">
+                    <h6>Video <?php echo $i; ?></h6>
+                    <?php if (!empty($item['video'])): ?>
+                        <p class="mb-2"><a target="_blank" href="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($item['video']); ?>">Current video</a></p>
+                    <?php endif; ?>
+                    <input type="hidden" name="watch_buy_existing_video[<?php echo $i; ?>]" value="<?php echo htmlspecialchars($item['video'] ?? ''); ?>">
+                    <label class="form-label">Video file</label>
+                    <input type="file" name="watch_buy_video[<?php echo $i; ?>]" accept="video/*" class="form-control mb-2">
+                    <label class="form-label">Product URL</label>
+                    <input type="url" name="watch_buy_product_url[<?php echo $i; ?>]" class="form-control" placeholder="https://example.com/product" value="<?php echo htmlspecialchars($item['product_url'] ?? ''); ?>">
+                </div>
+            <?php endfor; ?>
         </div>
     </div>
 
