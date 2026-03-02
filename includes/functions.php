@@ -50,12 +50,35 @@ function getWishlistCount() {
 
 // get user country (reuse your existing geolocation)
 function getUserCountry() {
-    if(isset($_SERVER['HTTP_CF_IPCOUNTRY'])) return $_SERVER['HTTP_CF_IPCOUNTRY'];
-    $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+    if (isset($_SERVER['HTTP_CF_IPCOUNTRY'])) {
+        $cfCountry = strtoupper(trim((string)$_SERVER['HTTP_CF_IPCOUNTRY']));
+        if ($cfCountry !== '') return $cfCountry;
+    }
+
+    $headers = ['HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'];
+    $ip = '127.0.0.1';
+    foreach ($headers as $header) {
+        $value = trim((string)($_SERVER[$header] ?? ''));
+        if ($value === '') continue;
+        if ($header === 'HTTP_X_FORWARDED_FOR') {
+            $parts = explode(',', $value);
+            $value = trim((string)($parts[0] ?? ''));
+        }
+        if ($value !== '' && filter_var($value, FILTER_VALIDATE_IP)) {
+            $ip = $value;
+            break;
+        }
+    }
+
+    if ($ip === '127.0.0.1' || $ip === '::1') {
+        return 'IN';
+    }
+
     $json = @file_get_contents("https://ipapi.co/{$ip}/json/");
     if($json) {
         $data = json_decode($json, true);
-        return $data['country'] ?? 'IN';
+        $country = strtoupper(trim((string)($data['country_code'] ?? $data['country'] ?? '')));
+        if ($country !== '') return $country;
     }
     return 'IN';
 }
