@@ -3,9 +3,32 @@ include '../config/db.php';
 include '../includes/homepage-config.php';
 include 'header.php';
 
+function resolveFfmpegBinary(): ?string {
+    $candidates = [
+        'ffmpeg',
+        '/usr/bin/ffmpeg',
+        '/usr/local/bin/ffmpeg',
+    ];
+
+    if (!function_exists('exec')) {
+        return null;
+    }
+
+    foreach ($candidates as $candidate) {
+        $output = [];
+        $checkCmd = escapeshellcmd($candidate) . ' -version 2>&1';
+        exec($checkCmd, $output, $code);
+        if ($code === 0) {
+            return $candidate;
+        }
+    }
+
+    return null;
+}
+
 function convertVideoToWebm(string $inputPath, string $outputPath): bool {
-    $ffmpeg = trim((string)shell_exec('command -v ffmpeg 2>/dev/null'));
-    if ($ffmpeg === '') {
+    $ffmpeg = resolveFfmpegBinary();
+    if ($ffmpeg === null) {
         return false;
     }
 
@@ -20,10 +43,9 @@ function convertVideoToWebm(string $inputPath, string $outputPath): bool {
     return $code === 0 && file_exists($outputPath) && filesize($outputPath) > 0;
 }
 
-$currentWatchBuyItems = getWatchBuyItems($settings['watch_buy_videos'] ?? '');
-
 $msg = '';
 $settings = getHomepageSettings($conn);
+$currentWatchBuyItems = getWatchBuyItems($settings['watch_buy_videos'] ?? '');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $heroUrl = trim($_POST['hero_url'] ?? '');
