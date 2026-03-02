@@ -154,12 +154,12 @@ $currentBrandIds = csvIdsToArray($settings['brand_ids'] ?? '');
                     <input type="hidden" name="watch_buy_existing_video[<?php echo $i; ?>]" value="<?php echo htmlspecialchars($item['video'] ?? ''); ?>">
                     <input type="hidden" name="watch_buy_existing_preview_video[<?php echo $i; ?>]" value="<?php echo htmlspecialchars($item['preview_video'] ?? ''); ?>">
                     <label class="form-label">Video file</label>
-                    <input type="file" name="watch_buy_video[<?php echo $i; ?>]" accept="video/*" class="form-control mb-2">
-                    <label class="form-label">Product URL</label>
                     <input type="file" accept="video/*" class="form-control mb-2 watch-buy-video-input" data-slot="<?php echo $i; ?>">
                     <input type="hidden" name="watch_buy_video_base64[<?php echo $i; ?>]" class="watch-buy-video-base64" data-slot="<?php echo $i; ?>">
                     <input type="hidden" name="watch_buy_preview_base64[<?php echo $i; ?>]" class="watch-buy-preview-base64" data-slot="<?php echo $i; ?>">
                     <div class="form-text mb-2 watch-buy-status" data-slot="<?php echo $i; ?>"></div>
+                    <label class="form-label">Product URL</label>
+                    <input type="url" name="watch_buy_product_url[<?php echo $i; ?>]" class="form-control" placeholder="https://example.com/product" value="<?php echo htmlspecialchars($item['product_url'] ?? ''); ?>">
                 </div>
             <?php endfor; ?>
         </div>
