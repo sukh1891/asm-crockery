@@ -156,10 +156,11 @@ $watchBuyItems = getWatchBuyItems($settings['watch_buy_videos'] ?? '');
                     type="button"
                     class="watch-buy-card"
                     data-video-src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($item['video']); ?>"
+                    data-preview-src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($item['preview_video'] ?? $item['video']); ?>"
                     data-product-url="<?php echo htmlspecialchars($item['product_url']); ?>"
-                >
-                    <video muted playsinline preload="metadata">
-                        <source src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($item['video']); ?>" type="video/webm">
+                >   
+                    <video muted playsinline webkit-playsinline preload="metadata" autoplay loop>
+                        <source src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($item['preview_video'] ?? $item['video']); ?>" type="video/webm">
                     </video>
                 </button>
             <?php endforeach; ?>
@@ -168,7 +169,7 @@ $watchBuyItems = getWatchBuyItems($settings['watch_buy_videos'] ?? '');
 
     <div class="watch-buy-modal" id="watchBuyModal" aria-hidden="true">
         <button type="button" class="watch-buy-close" id="watchBuyClose" aria-label="Close">&times;</button>
-        <video id="watchBuyPlayer" controls playsinline></video>
+        <video id="watchBuyPlayer" controls playsinline webkit-playsinline preload="metadata"></video>
         <a id="watchBuyLink" href="#" class="watch-buy-btn" target="_self">Buy Now</a>
     </div>
     <?php endif; ?>
@@ -265,6 +266,13 @@ renderHomeProductSection($conn, $recommendedProducts, 'Recommended for You');
     };
 
     cards.forEach((card) => {
+        const preview = card.querySelector('video');
+        const previewSrc = card.dataset.previewSrc || card.dataset.videoSrc;
+        if (preview && previewSrc) {
+            preview.innerHTML = '<source src="' + previewSrc + '" type="video/webm">';
+            preview.load();
+            preview.play().catch(() => {});
+        }
         card.addEventListener('click', () => openModal(card.dataset.videoSrc, card.dataset.productUrl));
     });
 
