@@ -8,9 +8,14 @@ function ensureHomepageSettingsTable(mysqli $conn): void {
             hero_url VARCHAR(500) DEFAULT NULL,
             category_ids TEXT DEFAULT NULL,
             brand_ids TEXT DEFAULT NULL,
+            watch_buy_videos TEXT DEFAULT NULL,
             updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
+    $videoColumn = mysqli_query($conn, "SHOW COLUMNS FROM homepage_settings LIKE 'watch_buy_videos'");
+    if ($videoColumn && mysqli_num_rows($videoColumn) === 0) {
+        @mysqli_query($conn, "ALTER TABLE homepage_settings ADD COLUMN watch_buy_videos TEXT DEFAULT NULL AFTER brand_ids");
+    }
 
     mysqli_query($conn, "INSERT IGNORE INTO homepage_settings (id) VALUES (1)");
 }
@@ -23,8 +28,28 @@ function getHomepageSettings(mysqli $conn): array {
         'hero_image' => null,
         'hero_url' => null,
         'category_ids' => '',
-        'brand_ids' => ''
+        'brand_ids' => '',
+        'watch_buy_videos' => ''
     ];
+}
+
+function getWatchBuyItems(?string $json): array {
+    if (!$json) return [];
+    $items = json_decode($json, true);
+    if (!is_array($items)) return [];
+
+    $clean = [];
+    foreach ($items as $item) {
+        if (!is_array($item)) continue;
+        $video = trim((string)($item['video'] ?? ''));
+        $productUrl = trim((string)($item['product_url'] ?? ''));
+        if ($video === '' || $productUrl === '') continue;
+        $clean[] = [
+            'video' => $video,
+            'product_url' => $productUrl
+        ];
+    }
+    return array_slice($clean, 0, 4);
 }
 
 function csvIdsToArray(?string $csv): array {
