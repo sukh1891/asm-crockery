@@ -118,6 +118,7 @@ $brandTiles = getCategoryTiles($conn, $brandIds);
 $recentProducts = getHomeProducts($conn, 'recent');
 $discountProducts = getHomeProducts($conn, 'discount');
 $recommendedProducts = getHomeProducts($conn, 'recommended');
+$watchBuyItems = getWatchBuyItems($settings['watch_buy_videos'] ?? '');
 ?>
 <div class="container mt-4">
     <?php if (!empty($settings['hero_image'])): ?>
@@ -145,6 +146,32 @@ $recommendedProducts = getHomeProducts($conn, 'recommended');
             <?php endforeach; ?>
         </div>
     </section>
+    
+    <?php if (!empty($watchBuyItems)): ?>
+    <section class="home-categories mt-4">
+        <h2>Watch &amp; Buy</h2>
+        <div class="home-grid-watch-buy">
+            <?php foreach ($watchBuyItems as $i => $item): ?>
+                <button
+                    type="button"
+                    class="watch-buy-card"
+                    data-video-src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($item['video']); ?>"
+                    data-product-url="<?php echo htmlspecialchars($item['product_url']); ?>"
+                >
+                    <video muted playsinline preload="metadata">
+                        <source src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($item['video']); ?>" type="video/webm">
+                    </video>
+                </button>
+            <?php endforeach; ?>
+        </div>
+    </section>
+
+    <div class="watch-buy-modal" id="watchBuyModal" aria-hidden="true">
+        <button type="button" class="watch-buy-close" id="watchBuyClose" aria-label="Close">&times;</button>
+        <video id="watchBuyPlayer" controls playsinline></video>
+        <a id="watchBuyLink" href="#" class="watch-buy-btn" target="_self">Buy Now</a>
+    </div>
+    <?php endif; ?>
     
     <section class="home-categories mt-4">
         <h2>Shop by Brand</h2>
@@ -208,5 +235,43 @@ renderHomeProductSection($conn, $recommendedProducts, 'Recommended for You');
 ?>
 
 </div>
+<script>
+(function () {
+    const cards = document.querySelectorAll('.watch-buy-card');
+    if (!cards.length) return;
 
+    const modal = document.getElementById('watchBuyModal');
+    const closeBtn = document.getElementById('watchBuyClose');
+    const player = document.getElementById('watchBuyPlayer');
+    const buyLink = document.getElementById('watchBuyLink');
+
+    const openModal = (videoSrc, productUrl) => {
+        player.innerHTML = '<source src="' + videoSrc + '" type="video/webm">';
+        player.load();
+        player.play().catch(() => {});
+        buyLink.href = productUrl;
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closeModal = () => {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        player.pause();
+        player.removeAttribute('src');
+        player.innerHTML = '';
+        document.body.style.overflow = '';
+    };
+
+    cards.forEach((card) => {
+        card.addEventListener('click', () => openModal(card.dataset.videoSrc, card.dataset.productUrl));
+    });
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+})();
+</script>
 <?php include 'includes/footer.php'; ?>
