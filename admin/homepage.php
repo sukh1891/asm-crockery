@@ -3,45 +3,6 @@ include '../config/db.php';
 include '../includes/homepage-config.php';
 include 'header.php';
 
-function resolveFfmpegBinary(): ?string {
-    $candidates = [
-        'ffmpeg',
-        '/usr/bin/ffmpeg',
-        '/usr/local/bin/ffmpeg',
-    ];
-
-    if (!function_exists('exec')) {
-        return null;
-    }
-
-    foreach ($candidates as $candidate) {
-        $output = [];
-        $checkCmd = escapeshellcmd($candidate) . ' -version 2>&1';
-        exec($checkCmd, $output, $code);
-        if ($code === 0) {
-            return $candidate;
-        }
-    }
-
-    return null;
-}
-
-function convertVideoToWebm(string $inputPath, string $outputPath): bool {
-    $ffmpeg = resolveFfmpegBinary();
-    if ($ffmpeg === null) {
-        return false;
-    }
-
-    $cmd = escapeshellcmd($ffmpeg)
-        . ' -y -i ' . escapeshellarg($inputPath)
-        . ' -c:v libvpx-vp9 -b:v 0 -crf 34 -vf "scale=720:-2" -row-mt 1 -deadline good -cpu-used 4 '
-        . '-c:a libopus -b:a 96k '
-        . escapeshellarg($outputPath)
-        . ' 2>&1';
-
-    exec($cmd, $output, $code);
-    return $code === 0 && file_exists($outputPath) && filesize($outputPath) > 0;
-}
 $msg = '';
 $settings = getHomepageSettings($conn);
 $currentWatchBuyItems = getWatchBuyItems($settings['watch_buy_videos'] ?? '');
@@ -72,27 +33,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $watchBuyItems = [];
     for ($i = 1; $i <= 4; $i++) {
         $existingVideo = trim((string)($_POST['watch_buy_existing_video'][$i] ?? ''));
+        $existingPreviewVideo = trim((string)($_POST['watch_buy_existing_preview_video'][$i] ?? ''));
+        $videoBase64 = trim((string)($_POST['watch_buy_video_base64'][$i] ?? ''));
+        $previewBase64 = trim((string)($_POST['watch_buy_preview_base64'][$i] ?? ''));
+
         $productUrl = trim((string)($_POST['watch_buy_product_url'][$i] ?? ''));
         $videoPath = $existingVideo;
+        $previewVideoPath = ($existingPreviewVideo !== '' ? $existingPreviewVideo : $existingVideo);
 
-        if (!empty($_FILES['watch_buy_video']['name'][$i]) && is_uploaded_file($_FILES['watch_buy_video']['tmp_name'][$i])) {
+        if ($videoBase64 !== '') {
             $uploadDir = '../assets/uploads/homepage/videos';
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0775, true);
             }
 
-            $tmpInput = $_FILES['watch_buy_video']['tmp_name'][$i];
-            $finalFile = 'watch_buy_' . $i . '_' . time() . '_' . mt_rand(1000, 9999) . '.webm';
-            $finalPath = $uploadDir . '/' . $finalFile;
+            $uniqueSuffix = time() . '_' . mt_rand(1000, 9999);
+            $finalFile = 'watch_buy_' . $i . '_' . $uniqueSuffix . '.webm';
+            $previewFile = 'watch_buy_preview_' . $i . '_' . $uniqueSuffix . '.webm';
 
-            if (convertVideoToWebm($tmpInput, $finalPath)) {
+            $finalPath = $uploadDir . '/' . $finalFile;
+            $previewPath = $uploadDir . '/' . $previewFile;
+            
+            $decodedVideo = base64_decode($videoBase64, true);
+            if ($decodedVideo !== false && strlen($decodedVideo) > 0 && file_put_contents($finalPath, $decodedVideo) !== false) {
                 $videoPath = 'homepage/videos/' . $finalFile;
+                $previewVideoPath = $videoPath;
+
+                $decodedPreview = base64_decode($previewBase64, true);
+                if ($decodedPreview !== false && strlen($decodedPreview) > 0 && file_put_contents($previewPath, $decodedPreview) !== false) {
+                    $previewVideoPath = 'homepage/videos/' . $previewFile;
+                }
             }
         }
 
         if ($videoPath !== '' && $productUrl !== '') {
             $watchBuyItems[] = [
                 'video' => $videoPath,
+                'preview_video' => $previewVideoPath,
                 'product_url' => $productUrl,
             ];
         }
@@ -130,7 +107,7 @@ $currentBrandIds = csvIdsToArray($settings['brand_ids'] ?? '');
 <div class="alert alert-success"><?php echo htmlspecialchars($msg); ?></div>
 <?php endif; ?>
 
-<form method="post" enctype="multipart/form-data">
+<form method="post" enctype="multipart/form-data" id="homepageSettingsForm">
     <div class="card mb-3">
         <div class="card-header">Top Banner</div>
         <div class="card-body">
@@ -166,19 +143,23 @@ $currentBrandIds = csvIdsToArray($settings['brand_ids'] ?? '');
     <div class="card mb-3">
         <div class="card-header">Watch &amp; Buy Section</div>
         <div class="card-body">
-            <p class="text-muted">Upload up to 4 vertical videos. Videos are converted to compressed WebM automatically.</p>
+            <p class="text-muted">Upload up to 4 vertical videos.</p>
             <?php for ($i = 1; $i <= 4; $i++): ?>
-                <?php $item = $currentWatchBuyItems[$i - 1] ?? ['video' => '', 'product_url' => '']; ?>
+                <?php $item = $currentWatchBuyItems[$i - 1] ?? ['video' => '', 'preview_video' => '', 'product_url' => '']; ?>
                 <div class="border rounded p-3 mb-3">
                     <h6>Video <?php echo $i; ?></h6>
                     <?php if (!empty($item['video'])): ?>
                         <p class="mb-2"><a target="_blank" href="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($item['video']); ?>">Current video</a></p>
                     <?php endif; ?>
                     <input type="hidden" name="watch_buy_existing_video[<?php echo $i; ?>]" value="<?php echo htmlspecialchars($item['video'] ?? ''); ?>">
+                    <input type="hidden" name="watch_buy_existing_preview_video[<?php echo $i; ?>]" value="<?php echo htmlspecialchars($item['preview_video'] ?? ''); ?>">
                     <label class="form-label">Video file</label>
                     <input type="file" name="watch_buy_video[<?php echo $i; ?>]" accept="video/*" class="form-control mb-2">
                     <label class="form-label">Product URL</label>
-                    <input type="url" name="watch_buy_product_url[<?php echo $i; ?>]" class="form-control" placeholder="https://example.com/product" value="<?php echo htmlspecialchars($item['product_url'] ?? ''); ?>">
+                    <input type="file" accept="video/*" class="form-control mb-2 watch-buy-video-input" data-slot="<?php echo $i; ?>">
+                    <input type="hidden" name="watch_buy_video_base64[<?php echo $i; ?>]" class="watch-buy-video-base64" data-slot="<?php echo $i; ?>">
+                    <input type="hidden" name="watch_buy_preview_base64[<?php echo $i; ?>]" class="watch-buy-preview-base64" data-slot="<?php echo $i; ?>">
+                    <div class="form-text mb-2 watch-buy-status" data-slot="<?php echo $i; ?>"></div>
                 </div>
             <?php endfor; ?>
         </div>
@@ -204,5 +185,133 @@ $currentBrandIds = csvIdsToArray($settings['brand_ids'] ?? '');
 </form>
 
 </div>
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+<script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+<script>
+(async function () {
+    const form = document.getElementById('homepageSettingsForm');
+    const inputs = document.querySelectorAll('.watch-buy-video-input');
+    if (!inputs.length || !window.FFmpegWASM || !window.FFmpegUtil) return;
+
+    const { FFmpeg } = window.FFmpegWASM;
+    const { fetchFile } = window.FFmpegUtil;
+    const ffmpeg = new FFmpeg();
+    let ffmpegLoaded = false;
+
+    const ensureLoaded = async () => {
+        if (ffmpegLoaded) return true;
+        try {
+            await ffmpeg.load({
+                coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
+                wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm'
+            });
+            ffmpegLoaded = true;
+            return true;
+        } catch (e) {
+            console.warn('FFmpeg WASM load failed', e);
+            return false;
+        }
+    };
+
+    const uint8ToBase64 = (bytes) => {
+        let binary = '';
+        const chunkSize = 0x8000;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+            binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+        }
+        return btoa(binary);
+    };
+
+    const setStatus = (slot, text, isError = false) => {
+        const el = document.querySelector('.watch-buy-status[data-slot="' + slot + '"]');
+        if (!el) return;
+        el.textContent = text;
+        el.style.color = isError ? '#c62828' : '#2e7d32';
+    };
+
+    for (const input of inputs) {
+        input.addEventListener('change', async function () {
+            const file = this.files && this.files[0];
+            const slot = this.dataset.slot;
+            const fullHidden = document.querySelector('.watch-buy-video-base64[data-slot="' + slot + '"]');
+            const previewHidden = document.querySelector('.watch-buy-preview-base64[data-slot="' + slot + '"]');
+            if (!fullHidden || !previewHidden) return;
+
+            fullHidden.value = '';
+            previewHidden.value = '';
+            if (!file) {
+                setStatus(slot, '');
+                return;
+            }
+
+            setStatus(slot, 'Preparing video...');
+            const ok = await ensureLoaded();
+            if (!ok) {
+                setStatus(slot, 'Unable to load FFmpeg WebAssembly. Please check internet and try again.', true);
+                return;
+            }
+
+            const stamp = Date.now();
+            const inputName = 'input-' + slot + '-' + stamp + '.mp4';
+            const fullName = 'full-' + slot + '-' + stamp + '.webm';
+            const previewName = 'preview-' + slot + '-' + stamp + '.webm';
+
+            try {
+                await ffmpeg.writeFile(inputName, await fetchFile(file));
+
+                setStatus(slot, 'Converting full video to WebM...');
+                await ffmpeg.exec([
+                    '-i', inputName,
+                    '-c:v', 'libvpx-vp9', '-b:v', '0', '-crf', '34', '-vf', 'scale=720:-2', '-row-mt', '1', '-deadline', 'good', '-cpu-used', '4',
+                    '-c:a', 'libopus', '-b:a', '96k',
+                    fullName
+                ]);
+
+                setStatus(slot, 'Generating 3-second preview...');
+                await ffmpeg.exec([
+                    '-i', inputName,
+                    '-t', '3', '-an',
+                    '-c:v', 'libvpx-vp9', '-b:v', '0', '-crf', '36', '-vf', 'scale=480:-2', '-row-mt', '1', '-deadline', 'good', '-cpu-used', '4',
+                    previewName
+                ]);
+
+                const fullData = await ffmpeg.readFile(fullName);
+                const previewData = await ffmpeg.readFile(previewName);
+
+                const fullBytes = fullData instanceof Uint8Array ? fullData : new Uint8Array(fullData.buffer);
+                const previewBytes = previewData instanceof Uint8Array ? previewData : new Uint8Array(previewData.buffer);
+
+                fullHidden.value = uint8ToBase64(fullBytes);
+                previewHidden.value = uint8ToBase64(previewBytes);
+
+                setStatus(slot, 'Video and preview prepared. Ready to save.');
+            } catch (error) {
+                console.warn('Client-side conversion failed.', error);
+                fullHidden.value = '';
+                previewHidden.value = '';
+                setStatus(slot, 'Video conversion failed. Please try a smaller file or different format.', true);
+            } finally {
+                try { await ffmpeg.deleteFile(inputName); } catch (e) {}
+                try { await ffmpeg.deleteFile(fullName); } catch (e) {}
+                try { await ffmpeg.deleteFile(previewName); } catch (e) {}
+            }
+        });
+    }
+
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            const pending = Array.from(document.querySelectorAll('.watch-buy-status')).some((el) => {
+                const t = (el.textContent || '').toLowerCase();
+                return t.includes('preparing') || t.includes('converting') || t.includes('generating');
+            });
+            if (pending) {
+                e.preventDefault();
+                alert('Please wait for video conversion to finish before saving.');
+            }
+        });
+    }
+})();
+</script>
+
 </body>
 </html>
