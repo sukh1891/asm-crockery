@@ -83,7 +83,7 @@ if ($userLoggedIn) {
 </tr>
 <tr>
 <th>Total</th>
-<th class="text-end">₹<?php echo number_format($grandTotal,2); ?></th>
+<th class="text-end" id="checkoutTotal" data-price-inr="<?php echo htmlspecialchars((string)$grandTotal); ?>"><?php echo $currencySymbol . number_format($displayInUSD ? convertToUSD($grandTotal) : $grandTotal,2); ?></th>
 </tr>
 </table>
 
