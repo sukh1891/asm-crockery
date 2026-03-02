@@ -2,6 +2,7 @@
 require_once 'config/db.php';
 require_once 'config/keys.php';
 require_once 'includes/functions.php';
+require_once 'includes/countries.php';
 require_once 'includes/header.php';
 
 $cartSummary = getCartSummary($conn);
@@ -9,6 +10,22 @@ $cartSummary = getCartSummary($conn);
 $appliedCouponSummary = getAppliedCouponForSubtotal($cartSummary['subtotal'], $_SESSION['user_id'] ?? null);
 $couponDiscount = floatval($appliedCouponSummary['discount'] ?? 0);
 $grandTotal = round($cartSummary['total'] - $couponDiscount, 2);
+
+$checkoutCountryCode = getUserCountry();
+$isDefaultIndia = strtoupper($checkoutCountryCode) === 'IN';
+$displayInUSD = !$isDefaultIndia;
+$currencySymbol = $displayInUSD ? '$' : '₹';
+$countries = getAllCountries();
+$selectedCountry = $isDefaultIndia ? 'India' : 'United States';
+
+$totalWeightKg = 0;
+foreach ($cartSummary['items'] as $item) {
+    $qty = max(1, intval($item['qty'] ?? 1));
+    $weight = isset($item['variation_weight']) && $item['variation_weight'] !== null
+        ? floatval($item['variation_weight'])
+        : floatval($item['product_weight'] ?? 0);
+    $totalWeightKg += ($weight * $qty);
+}
 
 $userLoggedIn = isset($_SESSION['user_id']);
 $user = ['name'=>'','email'=>'','phone'=>'','address'=>''];
@@ -33,8 +50,11 @@ if ($userLoggedIn) {
 <input name="email" class="form-control mb-2" value="<?php echo htmlspecialchars($user['email']); ?>" placeholder="Email">
 <textarea name="address" class="form-control mb-2" placeholder="Address"><?php echo htmlspecialchars($user['address']); ?></textarea>
 <select name="country" class="form-select mb-2">
-    <option value="India">India</option>
-    <option value="Other">Other</option>
+    <?php foreach ($countries as $countryName): ?>
+        <option value="<?php echo htmlspecialchars($countryName); ?>" <?php echo $countryName === $selectedCountry ? "selected" : ""; ?>>
+            <?php echo htmlspecialchars($countryName); ?>
+        </option>
+    <?php endforeach; ?>
 </select>
 
 </div>
@@ -46,16 +66,20 @@ if ($userLoggedIn) {
 <?php foreach ($cartSummary['items'] as $i): ?>
 <tr>
 <td><?php echo htmlspecialchars($i['title']); ?></td>
-<td class="text-end">₹<?php echo number_format($i['qty']*$i['price_inr'],2); ?></td>
+<td class="text-end checkout-item-price" data-price-inr="<?php echo htmlspecialchars((string)($i['qty']*$i['price_inr'])); ?>"><?php echo $currencySymbol . number_format($displayInUSD ? convertToUSD($i['qty']*$i['price_inr']) : ($i['qty']*$i['price_inr']),2); ?></td>
 </tr>
 <?php endforeach; ?>
 <tr>
-<th>Subtotal + Shipping</th>
-<th class="text-end">₹<?php echo number_format($cartSummary['total'],2); ?></th>
+<th>Subtotal</th>
+<th class="text-end" id="checkoutSubtotal" data-price-inr="<?php echo htmlspecialchars((string)$cartSummary['subtotal']); ?>"><?php echo $currencySymbol . number_format($displayInUSD ? convertToUSD($cartSummary['subtotal']) : $cartSummary['subtotal'],2); ?></th>
+</tr>
+<tr>
+<th>Shipping</th>
+<th class="text-end" id="checkoutShipping" data-price-inr="<?php echo htmlspecialchars((string)$cartSummary['shipping']); ?>"><?php echo $currencySymbol . number_format($displayInUSD ? convertToUSD($cartSummary['shipping']) : $cartSummary['shipping'],2); ?></th>
 </tr>
 <tr>
 <th>Coupon Discount</th>
-<th class="text-end text-success">-₹<?php echo number_format($couponDiscount,2); ?></th>
+<th class="text-end text-success" id="checkoutDiscount" data-price-inr="<?php echo htmlspecialchars((string)$couponDiscount); ?>">-<?php echo $currencySymbol . number_format($displayInUSD ? convertToUSD($couponDiscount) : $couponDiscount,2); ?></th>
 </tr>
 <tr>
 <th>Total</th>
@@ -93,6 +117,43 @@ document.addEventListener('DOMContentLoaded', function () {
     const checkoutBtn = document.getElementById('checkoutBtn');
     if (!checkoutBtn) return;
 
+    const countrySelect = document.querySelector('[name="country"]');
+    const totalWeightKg = <?php echo json_encode((float)$totalWeightKg); ?>;
+    const subtotalInr = parseFloat(document.getElementById('checkoutSubtotal')?.getAttribute('data-price-inr') || '0');
+    const discountInr = parseFloat(document.getElementById('checkoutDiscount')?.getAttribute('data-price-inr') || '0');
+
+    const conversionRate = <?php echo json_encode((float)(mysqli_fetch_assoc(mysqli_query($conn, "SELECT rate FROM currency_rates WHERE currency='INR_TO_USD' LIMIT 1"))['rate'] ?? 0.012)); ?>;
+
+    const formatMoney = (amount, useUSD) => {
+        const value = useUSD ? (amount * conversionRate) : amount;
+        return (useUSD ? '$' : '₹') + value.toFixed(2);
+    };
+
+    const updateDisplayedCheckoutPrices = () => {
+        const selectedCountry = (countrySelect?.value || '').toLowerCase();
+        const useUSD = selectedCountry !== 'india';
+
+        const shippingInr = selectedCountry === 'india' ? 0 : (Math.ceil(Math.max(0, totalWeightKg)) * 1000);
+        const totalInr = Math.max(0, subtotalInr + shippingInr - discountInr);
+
+        const shippingEl = document.getElementById('checkoutShipping');
+        const totalEl = document.getElementById('checkoutTotal');
+        if (shippingEl) shippingEl.setAttribute('data-price-inr', String(shippingInr));
+        if (totalEl) totalEl.setAttribute('data-price-inr', String(totalInr));
+
+        document.querySelectorAll('[data-price-inr]').forEach((el) => {
+            const amount = parseFloat(el.getAttribute('data-price-inr') || '0');
+            const isDiscount = el.id === 'checkoutDiscount';
+            const formatted = formatMoney(amount, useUSD);
+            el.textContent = isDiscount ? ('-' + formatted) : formatted;
+        });
+    };
+
+    if (countrySelect) {
+        countrySelect.addEventListener('change', updateDisplayedCheckoutPrices);
+        updateDisplayedCheckoutPrices();
+    }
+    
     const loggedIn = <?php echo isset($_SESSION['user_id']) ? 'true' : 'false'; ?>;
     
     const resetCheckoutButton = function () {
