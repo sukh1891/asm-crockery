@@ -556,7 +556,7 @@ a:hover {
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-    color: #fff !important;
+    color: #000 !important;
 }
 
 .home-tile-content {
@@ -594,7 +594,7 @@ a:hover {
     background: #fff;
 }
 
-.home-tile-gradient-1 { background: linear-gradient(135deg, #ff6b6b, #f06595); }
+.home-tile-gradient-1 { background: linear-gradient(135deg, #FEFAE0, #FAEED1); }
 .home-tile-gradient-2 { background: linear-gradient(135deg, #4c6ef5, #15aabf); }
 .home-tile-gradient-3 { background: linear-gradient(135deg, #845ef7, #5f3dc4); }
 .home-tile-gradient-4 { background: linear-gradient(135deg, #38d9a9, #0ca678); }
