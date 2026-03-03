@@ -16,7 +16,10 @@ $isDefaultIndia = strtoupper($checkoutCountryCode) === 'IN';
 $displayInUSD = !$isDefaultIndia;
 $currencySymbol = $displayInUSD ? '$' : '₹';
 $countries = getAllCountries();
-$selectedCountry = $isDefaultIndia ? 'India' : 'United States';
+$selectedCountry = countryCodeToName($checkoutCountryCode);
+if (!in_array($selectedCountry, $countries, true)) {
+    $selectedCountry = $isDefaultIndia ? 'India' : 'United States';
+}
 
 $totalWeightKg = 0;
 foreach ($cartSummary['items'] as $item) {
