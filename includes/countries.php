@@ -28,3 +28,27 @@ function getAllCountries(): array {
         'Zambia','Zimbabwe'
     ];
 }
+function countryCodeToName(string $countryCode): string {
+    $code = strtoupper(trim($countryCode));
+    if ($code === 'IN') {
+        return 'India';
+    }
+
+    if (class_exists('Locale')) {
+        $name = Locale::getDisplayRegion('-' . $code, 'en');
+        if (is_string($name) && $name !== '' && $name !== $code) {
+            return $name;
+        }
+    }
+
+    $fallback = [
+        'US' => 'United States',
+        'GB' => 'United Kingdom',
+        'AE' => 'United Arab Emirates',
+        'CA' => 'Canada',
+        'AU' => 'Australia',
+        'SG' => 'Singapore',
+    ];
+
+    return $fallback[$code] ?? 'United States';
+}
