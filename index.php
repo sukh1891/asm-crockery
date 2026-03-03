@@ -134,7 +134,7 @@ $watchBuyItems = getWatchBuyItems($settings['watch_buy_videos'] ?? '');
         <h2>Shop by Category</h2>
         <div class="home-grid-tiles">
         <?php foreach ($categoryTiles as $index => $cat): ?>
-                <a href="/asm-crockery/category/<?php echo $cat['slug']; ?>" class="home-tile-card home-tile-gradient-<?php echo ($index % 8) + 1; ?>">
+                <a href="/asm-crockery/category/<?php echo $cat['slug']; ?>" class="home-tile-card home-tile-gradient-1">
                     <div class="home-tile-content">
                         <div class="home-tile-text">
                             <div class="home-tile-title"><?php echo htmlspecialchars($cat['name']); ?></div>
@@ -177,7 +177,7 @@ $watchBuyItems = getWatchBuyItems($settings['watch_buy_videos'] ?? '');
         <h2>Shop by Brand</h2>
         <div class="home-grid-tiles">
         <?php foreach ($brandTiles as $index => $cat): ?>
-                <a href="/asm-crockery/category/<?php echo $cat['slug']; ?>" class="home-tile-card home-tile-gradient-<?php echo ($index % 8) + 1; ?>">
+                <a href="/asm-crockery/category/<?php echo $cat['slug']; ?>" class="home-tile-card home-tile-gradient-1">
                     <div class="home-tile-content">
                         <div class="home-tile-text">
                             <div class="home-tile-title"><?php echo htmlspecialchars($cat['name']); ?></div>
