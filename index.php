@@ -156,11 +156,10 @@ $watchBuyItems = getWatchBuyItems($settings['watch_buy_videos'] ?? '');
                     type="button"
                     class="watch-buy-card"
                     data-video-src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($item['video']); ?>"
-                    data-preview-src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($item['preview_video'] ?? $item['video']); ?>"
                     data-product-url="<?php echo htmlspecialchars($item['product_url']); ?>"
                 >   
                     <video muted playsinline webkit-playsinline preload="metadata" autoplay loop>
-                        <source src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($item['preview_video'] ?? $item['video']); ?>" type="video/webm">
+                        <source src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($item['video']); ?>" type="video/mp4">
                     </video>
                 </button>
             <?php endforeach; ?>
@@ -247,7 +246,7 @@ renderHomeProductSection($conn, $recommendedProducts, 'Recommended for You');
     const buyLink = document.getElementById('watchBuyLink');
 
     const openModal = (videoSrc, productUrl) => {
-        player.innerHTML = '<source src="' + videoSrc + '" type="video/webm">';
+        player.innerHTML = '<source src="' + videoSrc + '" type="video/mp4">';
         player.load();
         player.play().catch(() => {});
         buyLink.href = productUrl;
@@ -267,9 +266,9 @@ renderHomeProductSection($conn, $recommendedProducts, 'Recommended for You');
 
     cards.forEach((card) => {
         const preview = card.querySelector('video');
-        const previewSrc = card.dataset.previewSrc || card.dataset.videoSrc;
+        const previewSrc = card.dataset.videoSrc;
         if (preview && previewSrc) {
-            preview.innerHTML = '<source src="' + previewSrc + '" type="video/webm">';
+            preview.innerHTML = '<source src="' + previewSrc + '" type="video/mp4">';
             preview.load();
             preview.play().catch(() => {});
         }
