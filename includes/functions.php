@@ -50,35 +50,73 @@ function getWishlistCount() {
 
 // get user country (reuse your existing geolocation)
 function getUserCountry() {
-    if (isset($_SERVER['HTTP_CF_IPCOUNTRY'])) {
-        $cfCountry = strtoupper(trim((string)$_SERVER['HTTP_CF_IPCOUNTRY']));
-        if ($cfCountry !== '') return $cfCountry;
+    $trustedCountryHeaders = [
+        'HTTP_CF_IPCOUNTRY',
+        'HTTP_X_COUNTRY_CODE',
+        'HTTP_X_APPENGINE_COUNTRY',
+    ];
+
+    foreach ($trustedCountryHeaders as $header) {
+        $value = strtoupper(trim((string)($_SERVER[$header] ?? '')));
+        if (preg_match('/^[A-Z]{2}$/', $value)) {
+            return $value;
+        }
     }
 
-    $headers = ['HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'];
-    $ip = '127.0.0.1';
-    foreach ($headers as $header) {
-        $value = trim((string)($_SERVER[$header] ?? ''));
-        if ($value === '') continue;
-        if ($header === 'HTTP_X_FORWARDED_FOR') {
-            $parts = explode(',', $value);
-            $value = trim((string)($parts[0] ?? ''));
+    $ipCandidates = [];
+    $forwarded = trim((string)($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''));
+    if ($forwarded !== '') {
+        foreach (explode(',', $forwarded) as $part) {
+            $part = trim($part);
+            if ($part !== '') $ipCandidates[] = $part;
         }
-        if ($value !== '' && filter_var($value, FILTER_VALIDATE_IP)) {
-            $ip = $value;
+    }
+
+    $realIp = trim((string)($_SERVER['HTTP_X_REAL_IP'] ?? ''));
+    if ($realIp !== '') $ipCandidates[] = $realIp;
+
+    $remote = trim((string)($_SERVER['REMOTE_ADDR'] ?? ''));
+    if ($remote !== '') $ipCandidates[] = $remote;
+
+    $ip = '';
+    foreach ($ipCandidates as $candidate) {
+        if (!filter_var($candidate, FILTER_VALIDATE_IP)) {
+            continue;
+        }
+        $isPublic = filter_var(
+            $candidate,
+            FILTER_VALIDATE_IP,
+            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+        ) !== false;
+
+        if ($isPublic) {
+            $ip = $candidate;
             break;
         }
+
+        if ($ip === '') {
+            $ip = $candidate;
+        }
     }
 
-    if ($ip === '127.0.0.1' || $ip === '::1') {
+    if ($ip === '' || $ip === '127.0.0.1' || $ip === '::1') {
         return 'IN';
     }
 
-    $json = @file_get_contents("https://ipapi.co/{$ip}/json/");
+    $context = stream_context_create([
+        'http' => [
+            'timeout' => 3,
+            'ignore_errors' => true,
+        ]
+    ]);
+
+    $json = @file_get_contents("https://ipapi.co/{$ip}/json/", false, $context);
     if($json) {
         $data = json_decode($json, true);
-        $country = strtoupper(trim((string)($data['country_code'] ?? $data['country'] ?? '')));
-        if ($country !== '') return $country;
+        $country = strtoupper(trim((string)($data['country_code'] ?? '')));
+        if (preg_match('/^[A-Z]{2}$/', $country)) {
+            return $country;
+        }
     }
     return 'IN';
 }
