@@ -42,12 +42,10 @@ function getWatchBuyItems(?string $json): array {
     foreach ($items as $item) {
         if (!is_array($item)) continue;
         $video = trim((string)($item['video'] ?? ''));
-        $previewVideo = trim((string)($item['preview_video'] ?? ''));
         $productUrl = trim((string)($item['product_url'] ?? ''));
         if ($video === '' || $productUrl === '') continue;
         $clean[] = [
             'video' => $video,
-            'preview_video' => ($previewVideo !== '' ? $previewVideo : $video),
             'product_url' => $productUrl
         ];
     }
