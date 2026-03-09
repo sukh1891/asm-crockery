@@ -126,7 +126,7 @@ $grandTotal = max(0, $cart['total'] - $couponDiscount);
 <h4>Total: ₹<span id="cartGrandTotal"><?php echo number_format($grandTotal,2); ?></span></h4>
 </div>
 
-<a href="/asm-crockery/checkout.php" class="btn btn-success">
+<a href="/checkout.php" class="btn btn-success">
 Proceed to Checkout
 </a>
 
@@ -143,7 +143,7 @@ document.querySelectorAll('.qtyInput').forEach(input => {
         fd.append('cart_id', cartId);
         fd.append('qty', input.value);
 
-        await fetch('/asm-crockery/api/cart/update.php', {
+        await fetch('/api/cart/update.php', {
             method: 'POST',
             body: fd
         });
@@ -160,7 +160,7 @@ document.querySelectorAll('.removeBtn').forEach(btn => {
         const fd = new FormData();
         fd.append('cart_id', cartId);
 
-        await fetch('/asm-crockery/api/cart/remove.php', {
+        await fetch('/api/cart/remove.php', {
             method: 'POST',
             body: fd
         });
@@ -185,7 +185,7 @@ async function applyCoupon(code) {
     fd.append('code', finalCode);
 
     try {
-        const res = await fetch('/asm-crockery/api/coupon/apply.php', {
+        const res = await fetch('/api/coupon/apply.php', {
             method: 'POST',
             body: fd
         });
@@ -197,7 +197,7 @@ async function applyCoupon(code) {
             return;
         }
 
-        await fetch('/asm-crockery/api/coupon/save-to-session.php', {
+        await fetch('/api/coupon/save-to-session.php', {
             method: 'POST',
             body: new URLSearchParams({ code: data.code })
         });

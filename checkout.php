@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function () {
         ========================== */
         if (!loggedIn) {
 
-            const res = await fetch('/asm-crockery/api/auth/send-otp.php', {
+            const res = await fetch('/api/auth/send-otp.php', {
                 method: 'POST',
                 body: new URLSearchParams({ phone })
             });
@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         let order;
         try {
-            const res = await fetch('/asm-crockery/api/checkout/create-order.php', {
+            const res = await fetch('/api/checkout/create-order.php', {
                 method: 'POST',
                 body: fd
             });
@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 let result;
                 try {
-                    const res2 = await fetch('/asm-crockery/api/checkout/process.php', {
+                    const res2 = await fetch('/api/checkout/process.php', {
                         method: 'POST',
                         body: fd2
                     });
@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (result.success) {
                     const orderNo = encodeURIComponent(result.order_number || '');
-                    window.location.href = '/asm-crockery/order-success.php?order=' + orderNo;
+                    window.location.href = '/order-success.php?order=' + orderNo;
                 } else {
                     alert(result.message || "Payment failed");
                     resetCheckoutButton();
@@ -311,7 +311,7 @@ document.addEventListener('DOMContentLoaded', function () {
             fd.append('address', document.querySelector('[name="address"]').value);
             fd.append('country', document.querySelector('[name="country"]').value);
 
-            const res = await fetch('/asm-crockery/api/auth/verify-otp.php', {
+            const res = await fetch('/api/auth/verify-otp.php', {
                 method: 'POST',
                 body: fd
             });

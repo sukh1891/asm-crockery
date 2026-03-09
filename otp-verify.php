@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_SESSION['checkout_data']))
 
 $data = $_SESSION['checkout_data'] ?? [];
 if (empty($data['phone']) && empty($data['email'])) {
-    header("Location: /asm-crockery/checkout.php");
+    header("Location: /checkout.php");
     exit;
 }
 
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Clean OTP data (important)
             unset($_SESSION['otp_code'], $_SESSION['otp_time'], $_SESSION['otp_resends']);
     
-            header("Location: /asm-crockery/api/place-order.php");
+            header("Location: /api/place-order.php");
             exit;
     
         } else {
@@ -121,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     
-        header("Location: /asm-crockery/api/place-order.php");
+        header("Location: /api/place-order.php");
         exit;
     }
 }

@@ -252,7 +252,7 @@ function renderImages(){
         d.className='image-thumb border p-1';
         d.draggable=true;
         d.innerHTML=`<button type="button" class="remove-btn">&times;</button>
-                     <img src="/asm-crockery/assets/uploads/${src}" width="100">`;
+                     <img src="/assets/uploads/${src}" width="100">`;
         d.querySelector('.remove-btn').onclick=e=>{
             e.stopPropagation();imageData.splice(i,1);renderImages();
         };

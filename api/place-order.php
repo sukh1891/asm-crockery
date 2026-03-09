@@ -7,7 +7,7 @@ if (
     !isset($_SESSION['otp_verified']) &&
     !isset($_SESSION['otp_skipped'])
 ) {
-    header("Location: /asm-crockery/checkout.php");
+    header("Location: /checkout.php");
     exit;
 }
 if (isset($_POST['skip'])) {
@@ -16,7 +16,7 @@ if (isset($_POST['skip'])) {
 
 $cart = $_SESSION['cart'] ?? [];
 if (!$cart) {
-    header("Location: /asm-crockery/cart.php");
+    header("Location: /cart.php");
     exit;
 }
 
@@ -109,5 +109,5 @@ unset($_SESSION['cart']);
 unset($_SESSION['checkout_data']);
 unset($_SESSION['otp_code'], $_SESSION['otp_verified'], $_SESSION['otp_skipped']);
 /* ===== Redirect ===== */
-header("Location: /asm-crockery/order-success.php?order=$orderNumber");
+header("Location: /order-success.php?order=$orderNumber");
 exit;

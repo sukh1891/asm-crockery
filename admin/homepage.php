@@ -100,7 +100,7 @@ $currentBrandIds = csvIdsToArray($settings['brand_ids'] ?? '');
         <div class="card-body">
             <?php if (!empty($settings['hero_image'])): ?>
                 <div class="mb-2">
-                    <img src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($settings['hero_image']); ?>" alt="Banner" style="max-height:120px; border:1px solid #ddd; padding:4px;">
+                    <img src="/assets/uploads/<?php echo htmlspecialchars($settings['hero_image']); ?>" alt="Banner" style="max-height:120px; border:1px solid #ddd; padding:4px;">
                 </div>
             <?php endif; ?>
             <label class="form-label">Banner Image</label>
@@ -136,7 +136,7 @@ $currentBrandIds = csvIdsToArray($settings['brand_ids'] ?? '');
                 <div class="border rounded p-3 mb-3">
                     <h6>Video <?php echo $i; ?></h6>
                     <?php if (!empty($item['video'])): ?>
-                        <p class="mb-2"><a target="_blank" href="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($item['video']); ?>">Current video</a></p>
+                        <p class="mb-2"><a target="_blank" href="/assets/uploads/<?php echo htmlspecialchars($item['video']); ?>">Current video</a></p>
                     <?php endif; ?>
                     <input type="hidden" name="watch_buy_existing_video[<?php echo $i; ?>]" value="<?php echo htmlspecialchars($item['video'] ?? ''); ?>">
                     <label class="form-label">MP4 video file</label>

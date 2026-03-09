@@ -9,6 +9,6 @@ if ((!isset($_SESSION['user_id']) || !intval($_SESSION['user_id'])) && function_
 
 if (!isset($_SESSION['user_id']) || !intval($_SESSION['user_id'])) {
     // Not logged in — redirect to login (you have OTP login page)
-    header("Location: /asm-crockery/login.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
+    header("Location: /login.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
     exit;
 }

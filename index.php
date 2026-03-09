@@ -125,7 +125,7 @@ $watchBuyItems = getWatchBuyItems($settings['watch_buy_videos'] ?? '');
     <section class="home-banner mb-4">
         <?php $bannerHref = trim((string)($settings['hero_url'] ?? '')); ?>
         <?php if ($bannerHref !== ''): ?><a href="<?php echo htmlspecialchars($bannerHref); ?>"><?php endif; ?>
-            <img src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($settings['hero_image']); ?>" alt="Homepage banner">
+            <img src="/assets/uploads/<?php echo htmlspecialchars($settings['hero_image']); ?>" alt="Homepage banner">
         <?php if ($bannerHref !== ''): ?></a><?php endif; ?>
     </section>
     <?php endif; ?>
@@ -134,13 +134,13 @@ $watchBuyItems = getWatchBuyItems($settings['watch_buy_videos'] ?? '');
         <h2>Shop by Category</h2>
         <div class="home-grid-tiles">
         <?php foreach ($categoryTiles as $index => $cat): ?>
-                <a href="/asm-crockery/category/<?php echo $cat['slug']; ?>" class="home-tile-card home-tile-gradient-1">
+                <a href="/category/<?php echo $cat['slug']; ?>" class="home-tile-card home-tile-gradient-1">
                     <div class="home-tile-content">
                         <div class="home-tile-text">
                             <div class="home-tile-title"><?php echo htmlspecialchars($cat['name']); ?></div>
                             <div class="home-tile-count"><?php echo (int)$cat['total_items']; ?> items</div>
                         </div>
-                        <img src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($cat['image']); ?>" alt="<?php echo htmlspecialchars($cat['name']); ?>">
+                        <img src="/assets/uploads/<?php echo htmlspecialchars($cat['image']); ?>" alt="<?php echo htmlspecialchars($cat['name']); ?>">
                     </div>
                 </a>
             <?php endforeach; ?>
@@ -155,11 +155,11 @@ $watchBuyItems = getWatchBuyItems($settings['watch_buy_videos'] ?? '');
                 <button
                     type="button"
                     class="watch-buy-card"
-                    data-video-src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($item['video']); ?>"
+                    data-video-src="/assets/uploads/<?php echo htmlspecialchars($item['video']); ?>"
                     data-product-url="<?php echo htmlspecialchars($item['product_url']); ?>"
                 >   
                     <video muted playsinline webkit-playsinline preload="metadata" autoplay loop>
-                        <source src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($item['video']); ?>" type="video/mp4">
+                        <source src="/assets/uploads/<?php echo htmlspecialchars($item['video']); ?>" type="video/mp4">
                     </video>
                 </button>
             <?php endforeach; ?>
@@ -177,13 +177,13 @@ $watchBuyItems = getWatchBuyItems($settings['watch_buy_videos'] ?? '');
         <h2>Shop by Brand</h2>
         <div class="home-grid-tiles">
         <?php foreach ($brandTiles as $index => $cat): ?>
-                <a href="/asm-crockery/category/<?php echo $cat['slug']; ?>" class="home-tile-card home-tile-gradient-1">
+                <a href="/category/<?php echo $cat['slug']; ?>" class="home-tile-card home-tile-gradient-1">
                     <div class="home-tile-content">
                         <div class="home-tile-text">
                             <div class="home-tile-title"><?php echo htmlspecialchars($cat['name']); ?></div>
                             <div class="home-tile-count"><?php echo (int)$cat['total_items']; ?> items</div>
                         </div>
-                        <img src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($cat['image']); ?>" alt="<?php echo htmlspecialchars($cat['name']); ?>">
+                        <img src="/assets/uploads/<?php echo htmlspecialchars($cat['image']); ?>" alt="<?php echo htmlspecialchars($cat['name']); ?>">
                     </div>
                 </a>
             <?php endforeach; ?>
@@ -204,11 +204,11 @@ function renderHomeProductSection(mysqli $conn, array $products, string $title):
             ?>
             <div class="product-card">
                 <?php if ($pricing['off'] > 0): ?><div class="sale-badge"><?php echo $pricing['off']; ?>% OFF</div><?php endif; ?>
-                <a href="/asm-crockery/product/<?php echo htmlspecialchars($p['slug']); ?>">
-                    <img src="/asm-crockery/assets/uploads/<?php echo htmlspecialchars($img); ?>" loading="lazy" alt="<?php echo htmlspecialchars($p['title']); ?>">
+                <a href="/product/<?php echo htmlspecialchars($p['slug']); ?>">
+                    <img src="/assets/uploads/<?php echo htmlspecialchars($img); ?>" loading="lazy" alt="<?php echo htmlspecialchars($p['title']); ?>">
                 </a>
                 <div class="product-card-body">
-                    <a class="product-title" href="/asm-crockery/product/<?php echo htmlspecialchars($p['slug']); ?>">
+                    <a class="product-title" href="/product/<?php echo htmlspecialchars($p['slug']); ?>">
                         <?php echo htmlspecialchars(truncateWords((string)$p['title'])); ?>
                     </a>
                     <div class="price-wrap">
