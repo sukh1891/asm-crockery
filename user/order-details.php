@@ -46,7 +46,7 @@ $status = strtolower(trim($order['status'] ?? 'pending'));
         </tbody>
       </table>
 
-      <a href="/asm-crockery/admin/invoice.php?id=<?php echo $order_id; ?>" class="btn btn-outline-secondary" target="_blank">Download Invoice (PDF)</a>
+      <a href="/admin/invoice.php?id=<?php echo $order_id; ?>" class="btn btn-outline-secondary" target="_blank">Download Invoice (PDF)</a>
     </div>
 
     <div class="col-md-4">
@@ -76,7 +76,7 @@ $status = strtolower(trim($order['status'] ?? 'pending'));
 <script>
 document.getElementById('reorderBtn').addEventListener('click', function(){
   if (!confirm('Add items from this order into your cart?')) return;
-  fetch('/asm-crockery/api/user/reorder.php', {
+  fetch('/api/user/reorder.php', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ order_id: this.dataset.order })

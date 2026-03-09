@@ -68,10 +68,10 @@ $isSimpleInStock = ($product['product_type'] === 'simple' && $product['stock'] =
 <!-- BREADCRUMBS -->
 <nav aria-label="breadcrumb">
 <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="/asm-crockery/">Home</a></li>
+    <li class="breadcrumb-item"><a href="/">Home</a></li>
     <?php foreach ($breadcrumbs as $bc): ?>
         <li class="breadcrumb-item">
-            <a href="/asm-crockery/category/<?php echo $bc['slug']; ?>">
+            <a href="/category/<?php echo $bc['slug']; ?>">
                 <?php echo htmlspecialchars($bc['name']); ?>
             </a>
         </li>
@@ -101,7 +101,7 @@ $isSimpleInStock = ($product['product_type'] === 'simple' && $product['stock'] =
         <?php if (count($images) > 1): ?>
         <div class="gallery-thumbs">
             <?php foreach ($images as $i => $img): ?>
-                <img src="/asm-crockery/assets/uploads/<?php echo $img; ?>"
+                <img src="/assets/uploads/<?php echo $img; ?>"
                      class="<?php echo $i===0?'active':''; ?>"
                      onclick="setMainImage(this)">
             <?php endforeach; ?>
@@ -110,7 +110,7 @@ $isSimpleInStock = ($product['product_type'] === 'simple' && $product['stock'] =
 
         <div class="gallery-main">
             <img id="mainProductImage"
-                 src="/asm-crockery/assets/uploads/<?php echo $mainImg; ?>">
+                 src="/assets/uploads/<?php echo $mainImg; ?>">
         </div>
 
     </div>
@@ -167,7 +167,7 @@ $isSimpleInStock = ($product['product_type'] === 'simple' && $product['stock'] =
 <?php endif; ?>
 
 <!-- ADD TO CART / STOCK STATUS -->
-<form method="post" action="/asm-crockery/cart.php">
+<form method="post" action="/cart.php">
 <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
 <input type="hidden" name="variation_id" id="variationId"
        value="<?php echo $defaultVar['id'] ?? ''; ?>">
@@ -254,8 +254,8 @@ $imgs = explode(',',$rp['images']);
 $img = $imgs[0] ?? 'placeholder.webp';
 ?>
 <div class="product-card">
-<a href="/asm-crockery/product/<?php echo $rp['slug']; ?>">
-<img src="/asm-crockery/assets/uploads/<?php echo $img; ?>">
+<a href="/product/<?php echo $rp['slug']; ?>">
+<img src="/assets/uploads/<?php echo $img; ?>">
 </a>
 <div class="product-title"><?php echo htmlspecialchars($rp['title']); ?></div>
 </div>
@@ -321,14 +321,14 @@ if (addBtn) {
             fd.append('variation_id', variation.value);
         }
 
-        const res = await fetch('/asm-crockery/api/cart/add.php', {
+        const res = await fetch('/api/cart/add.php', {
             method: 'POST',
             body: fd
         });
 
         const data = await res.json();
         if (data.success) {
-            window.location.href = '/asm-crockery/cart.php';
+            window.location.href = '/cart.php';
         } else {
             alert(data.message || 'Failed to add to cart');
         }

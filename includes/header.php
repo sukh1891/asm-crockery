@@ -18,12 +18,12 @@ $menuCategories = array_slice(getMenuCategories(), 0, 5);
     <meta name="description" content="<?php echo htmlspecialchars($seo['desc']); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="canonical" href="https://asmcrockery.com<?php echo $seo['canonical']; ?>">
-    <link rel="stylesheet" href="/asm-crockery/assets/css/style.css">
-    <link rel="stylesheet" href="/asm-crockery/assets/css/store.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/store.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
 </head>
 <body>
-<base href="/asm-crockery/">
+<base href="/">
 <header class="site-header">
     <div class="container header-inner">
         
@@ -33,13 +33,13 @@ $menuCategories = array_slice(getMenuCategories(), 0, 5);
             <span></span>
         </button>
         <div class="logo">
-            <a href="/asm-crockery/">ASM Crockery</a>
+            <a href="/">ASM Crockery</a>
         </div>
 
         <nav class="main-nav" id="siteNavigation">
-            <a href="/asm-crockery/">Home</a>
+            <a href="/">Home</a>
             <?php foreach ($menuCategories as $cat): ?>
-                <a href="/asm-crockery/category/<?php echo $cat['slug']; ?>">
+                <a href="/category/<?php echo $cat['slug']; ?>">
                     <?php echo htmlspecialchars($cat['name']); ?>
                 </a>
             <?php endforeach; ?>
@@ -47,7 +47,7 @@ $menuCategories = array_slice(getMenuCategories(), 0, 5);
 
         <div class="header-actions">
             <!-- ACCOUNT -->
-            <a href="/asm-crockery/login.php" class="icon-btn" title="Account">
+            <a href="/login.php" class="icon-btn" title="Account">
                 <svg class="icon" fill="none" viewBox="0 0 24 24">
                     <circle cx="12" cy="8" r="4"></circle>
                     <path d="M4 20c2-4 14-4 16 0"></path>
@@ -55,7 +55,7 @@ $menuCategories = array_slice(getMenuCategories(), 0, 5);
             </a>
         
             <!-- CART -->
-            <a href="/asm-crockery/cart.php" class="icon-btn" title="Cart">
+            <a href="/cart.php" class="icon-btn" title="Cart">
                 <svg class="icon" fill="none" viewBox="0 0 24 24">
                     <circle cx="9" cy="21" r="1"></circle>
                     <circle cx="20" cy="21" r="1"></circle>

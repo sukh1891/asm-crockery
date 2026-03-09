@@ -6,9 +6,9 @@ include 'includes/functions.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 // If already logged in
-$redirect = trim($_GET['redirect'] ?? '/asm-crockery/user/dashboard.php');
+$redirect = trim($_GET['redirect'] ?? '/user/dashboard.php');
 if ($redirect === '' || $redirect[0] !== '/' || strpos($redirect, 'http') === 0) {
-    $redirect = '/asm-crockery/user/dashboard.php';
+    $redirect = '/user/dashboard.php';
 }
 
 if (getLoggedInUserId()) {
@@ -62,7 +62,7 @@ phoneForm.addEventListener('submit', async function (e) {
         return;
     }
 
-    const res = await fetch('/asm-crockery/api/auth/send-otp.php', {
+    const res = await fetch('/api/auth/send-otp.php', {
         method: 'POST',
         body: new URLSearchParams({ phone })
     });
@@ -86,7 +86,7 @@ otpForm.addEventListener('submit', async function (e) {
     fd.append('phone', phoneInput.value.trim());
     fd.append('otp', otpInput.value.trim());
 
-    const res = await fetch('/asm-crockery/api/auth/verify-otp.php', {
+    const res = await fetch('/api/auth/verify-otp.php', {
         method: 'POST',
         body: fd
     });

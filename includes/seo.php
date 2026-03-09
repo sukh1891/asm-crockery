@@ -7,7 +7,7 @@ function seoHome() {
     return [
         'title' => 'Premium Crockery & Dinnerware Online | ' . SITE_NAME,
         'desc'  => 'Buy premium crockery, dinner sets, plates, bowls and serveware online at best prices. Trusted quality by ' . SITE_NAME . '.',
-        'canonical' => '/asm-crockery/'
+        'canonical' => '/'
     ];
 }
 
@@ -26,7 +26,7 @@ function seoCategory($category, $breadcrumbs) {
     return [
         'title' => $title,
         'desc'  => substr($desc, 0, 160),
-        'canonical' => '/asm-crockery/category/' . $category['slug']
+        'canonical' => '/category/' . $category['slug']
     ];
 }
 
@@ -47,6 +47,6 @@ function seoProduct($product, $breadcrumbs) {
     return [
         'title' => substr($title, 0, 60),
         'desc'  => substr($desc, 0, 160),
-        'canonical' => '/asm-crockery/product/' . $product['slug']
+        'canonical' => '/product/' . $product['slug']
     ];
 }

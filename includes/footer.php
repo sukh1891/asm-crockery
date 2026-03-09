@@ -9,7 +9,7 @@
         <div class="footer-links">
             <h6>Categories</h6>
             <?php foreach ($menuCategories as $cat): ?>
-                <a href="/asm-crockery/category/<?php echo $cat['slug']; ?>">
+                <a href="/category/<?php echo $cat['slug']; ?>">
                     <?php echo htmlspecialchars($cat['name']); ?>
                 </a>
             <?php endforeach; ?>
@@ -39,14 +39,14 @@ input.addEventListener('input', () => {
     }
 
     timer = setTimeout(() => {
-        fetch(`/asm-crockery/api/search-suggest.php?q=${encodeURIComponent(q)}`)
+        fetch(`/api/search-suggest.php?q=${encodeURIComponent(q)}`)
         .then(r => r.json())
         .then(data => {
             box.innerHTML = '';
             data.forEach(p => {
                 box.innerHTML += `
-                    <a href="/asm-crockery/product/${p.slug}" class="search-item">
-                        <img src="/asm-crockery/assets/uploads/${p.img}">
+                    <a href="/product/${p.slug}" class="search-item">
+                        <img src="/assets/uploads/${p.img}">
                         <div>
                             <div>${p.title}</div>
                             <small>₹${p.price}</small>
@@ -56,7 +56,7 @@ input.addEventListener('input', () => {
             });
 
             box.innerHTML += `
-                <a href="/asm-crockery/search.php?q=${encodeURIComponent(q)}"
+                <a href="/search.php?q=${encodeURIComponent(q)}"
                    class="search-all">
                    View all results →
                 </a>

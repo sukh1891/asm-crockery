@@ -45,7 +45,7 @@ $q = mysqli_query($conn, "SELECT * FROM orders $where ORDER BY id DESC LIMIT $pe
             <td>₹<?php echo number_format($o['amount'],2); ?></td>
             <td><?php echo ucfirst($o['status']); ?></td>
             <td>
-              <a href="/asm-crockery/user/order-details.php?id=<?php echo $o['id']; ?>" class="btn btn-sm btn-primary">View</a>
+              <a href="/user/order-details.php?id=<?php echo $o['id']; ?>" class="btn btn-sm btn-primary">View</a>
             </td>
           </tr>
         <?php endwhile; ?>

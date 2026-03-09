@@ -58,11 +58,11 @@ $pq = mysqli_query($conn,
 <nav aria-label="breadcrumb">
 <ol class="breadcrumb">
     <li class="breadcrumb-item">
-        <a href="/asm-crockery/">Home</a>
+        <a href="/">Home</a>
     </li>
     <?php foreach ($breadcrumbs as $bc): ?>
         <li class="breadcrumb-item">
-            <a href="/asm-crockery/category/<?php echo $bc['slug']; ?>">
+            <a href="/category/<?php echo $bc['slug']; ?>">
                 <?php echo htmlspecialchars($bc['name']); ?>
             </a>
         </li>
@@ -78,7 +78,7 @@ $pq = mysqli_query($conn,
     <div class="d-flex flex-wrap gap-2">
         <?php while ($c = mysqli_fetch_assoc($childCats)): ?>
             <a class="btn btn-outline-secondary btn-sm"
-               href="/asm-crockery/category/<?php echo $c['slug']; ?>">
+               href="/category/<?php echo $c['slug']; ?>">
                 <?php echo htmlspecialchars($c['name']); ?>
             </a>
         <?php endwhile; ?>
@@ -123,12 +123,12 @@ if ($isSale && $p['regular_price'] > 0) {
         <div class="sale-badge"><?php echo $saleOffPercent; ?>% OFF</div>
     <?php endif; ?>
 
-    <a href="/asm-crockery/product/<?php echo $p['slug']; ?>">
-        <img src="/asm-crockery/assets/uploads/<?php echo $img; ?>" loading="lazy">
+    <a href="/product/<?php echo $p['slug']; ?>">
+        <img src="/assets/uploads/<?php echo $img; ?>" loading="lazy">
     </a>
 
     <div class="product-card-body">
-        <a class="product-title" href="/asm-crockery/product/<?php echo $p['slug']; ?>"><?php echo htmlspecialchars(truncateWords((string)$p['title'])); ?></a>
+        <a class="product-title" href="/product/<?php echo $p['slug']; ?>"><?php echo htmlspecialchars(truncateWords((string)$p['title'])); ?></a>
 
         <div class="price-wrap">
         <?php if ($isVariable): ?>
